@@ -3,111 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineSync - Sala de Cinema</title>
+    <title>CineSync - Final</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            --accent: #00d2ff;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(-45deg, #1a1a1a, #2c3e50, #000000, #434343);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: white;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
-            border-radius: 16px;
-        }
-
-        /* --- LOBBY --- */
-        #lobby {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.8);
-        }
+        :root { --glass-bg: rgba(255, 255, 255, 0.1); --glass-border: rgba(255, 255, 255, 0.2); --accent: #00d2ff; }
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: #1a1a1a; color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
+        .glass { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; }
         
+        #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: #000; }
         .login-card { padding: 40px; width: 350px; text-align: center; display: flex; flex-direction: column; gap: 15px; }
+        input { padding: 15px; border-radius: 10px; border: 1px solid #555; background: #222; color: white; width: 100%; box-sizing: border-box; }
+        button { padding: 15px; border-radius: 10px; border: none; background: var(--accent); cursor: pointer; font-weight: bold; }
         
-        input {
-            padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(0,0,0,0.3); color: white; outline: none; width: 100%; box-sizing: border-box;
-        }
-        
-        button {
-            padding: 15px; border-radius: 10px; border: none; background: var(--accent);
-            color: #000; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase;
-        }
-        button:hover { filter: brightness(1.2); transform: scale(1.02); }
-
-        /* --- APP --- */
         #app { display: none; padding: 20px; height: 100%; box-sizing: border-box; }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            grid-template-rows: auto 1fr;
-            gap: 20px;
-            height: 100%;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-
-        .controls-bar { grid-column: 1 / -1; padding: 15px; display: flex; gap: 10px; align-items: center; }
-        .controls-bar input { flex: 1; }
-
-        .video-wrapper {
-            position: relative; background: #000; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .main-grid { display: grid; grid-template-columns: 1fr 350px; grid-template-rows: auto 1fr; gap: 20px; height: 100%; }
+        .controls { grid-column: 1 / -1; padding: 15px; display: flex; gap: 10px; }
+        .video-area { position: relative; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         #yt-player, #html5-player { width: 100%; height: 100%; position: absolute; }
         #html5-player { display: none; }
-
-        /* --- CHAT --- */
-        .chat-container { display: flex; flex-direction: column; overflow: hidden; }
-        .chat-header { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); font-weight: bold; }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
         
-        .msg { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; word-wrap: break-word;}
+        .chat-area { display: flex; flex-direction: column; overflow: hidden; }
+        .msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; font-size: 0.9rem; }
         .msg strong { color: var(--accent); display: block; font-size: 0.75rem; }
-        .msg.system { background: transparent; font-style: italic; opacity: 0.7; text-align: center; border: 1px dashed rgba(255,255,255,0.2); }
 
-        .chat-input-area { padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 5px; }
-
-        /* RESPONSIVO */
-        @media (max-width: 900px) {
-            #app { padding: 10px; }
-            .main-grid { grid-template-columns: 1fr; grid-template-rows: auto 40vh 1fr; }
-        }
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; grid-template-rows: auto 40vh 1fr; } }
     </style>
 </head>
 <body>
@@ -118,36 +44,32 @@
             <input type="text" id="usernameInput" placeholder="Seu Apelido">
             <input type="text" id="roomInput" placeholder="Nome da Sala">
             <button onclick="enterRoom()">Entrar</button>
-            <button onclick="createRandom()" style="background:transparent; border:1px solid white; color:white;">Gerar Código</button>
         </div>
     </div>
 
     <div id="app">
         <div class="main-grid">
-            <div class="controls-bar glass">
-                <input type="text" id="mediaUrl" placeholder="Link do YouTube ou .mp4">
+            <div class="controls glass">
+                <input type="text" id="mediaUrl" placeholder="Cole o link aqui...">
                 <button onclick="loadMedia()">▶ Play</button>
-                <div style="cursor:pointer; padding: 0 10px;" onclick="copyLink()">📋 Copiar Link</div>
+                <button onclick="navigator.clipboard.writeText(window.location.href);alert('Copiado!')">🔗 Link</button>
             </div>
-
-            <div class="video-wrapper glass">
+            <div class="video-area glass">
                 <div id="yt-player"></div>
                 <video id="html5-player" controls playsinline></video>
             </div>
-
-            <div class="chat-container glass">
-                <div class="chat-header">Chat da Sala</div>
-                <div class="chat-messages" id="chatList"></div>
-                <div class="chat-input-area">
-                    <input type="text" id="msgInput" placeholder="Mensagem..." onkeypress="handleChatEnter(event)">
-                    <button onclick="sendMsg()" style="width: 50px;">➤</button>
+            <div class="chat-area glass">
+                <div style="padding:15px; border-bottom:1px solid #555;">Chat</div>
+                <div class="msgs" id="chatList"></div>
+                <div style="padding:15px; display:flex; gap:5px;">
+                    <input id="msgInput" placeholder="..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()">➤</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- SUAS CREDENCIAIS CONFIGURADAS ---
         const firebaseConfig = {
             apiKey: "AIzaSyAzUrQOJcALZmO9vyO8J52XDKL4Q49M7Rg",
             authDomain: "cine-54caf.firebaseapp.com",
@@ -161,8 +83,7 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let roomRef, chatRef, currentUser;
-        let ytPlayer, hls;
+        let roomRef, chatRef, currentUser, ytPlayer, hls;
         let html5Player = document.getElementById('html5-player');
         let currentMode = 'youtube';
         let isRemoteUpdate = false;
@@ -173,19 +94,13 @@
             if(params.has('room')) document.getElementById('roomInput').value = params.get('room');
         };
 
-        function createRandom() {
-            document.getElementById('roomInput').value = Math.random().toString(36).substring(2, 7);
-        }
-
         function enterRoom() {
-            const user = document.getElementById('usernameInput').value.trim();
-            const room = document.getElementById('roomInput').value.trim();
-            if (!user || !room) return alert("Preencha tudo!");
-
-            currentUser = user;
+            currentUser = document.getElementById('usernameInput').value || 'Anônimo';
+            const room = document.getElementById('roomInput').value || 'sala1';
+            
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('app').style.display = 'block';
-
+            
             const newUrl = window.location.pathname + '?room=' + room;
             window.history.pushState({path: newUrl}, '', newUrl);
 
@@ -194,19 +109,32 @@
 
             setupSync();
             setupChat();
-            chatRef.push({ user: 'Sistema', text: `${currentUser} entrou.`, type: 'system' });
         }
 
-        // --- CARREGAR VIDEO (COM A CORREÇÃO DO LINK) ---
+        // --- EXTRATOR DE ID PROFISSIONAL (CORREÇÃO DO BUG) ---
+        function getYouTubeID(url) {
+            // Esta Regex pega o ID ignorando ?si=, &feature=, etc.
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
         function loadMedia() {
             const url = document.getElementById('mediaUrl').value;
             let type = 'mp4';
-            if (url.includes('youtu')) type = 'youtube';
-            else if (url.includes('.m3u8')) type = 'hls';
+            let src = url;
 
-            roomRef.update({
-                src: url, type: type, status: 'playing', timestamp: 0, updatedAt: Date.now()
-            });
+            // Detecta YouTube e limpa o ID na hora de salvar
+            if (url.includes('youtu')) {
+                type = 'youtube';
+                const id = getYouTubeID(url);
+                if (id) src = id; // Salva só o ID limpo no banco
+                else return alert("Link do YouTube inválido!");
+            } else if (url.includes('.m3u8')) {
+                type = 'hls';
+            }
+
+            roomRef.update({ src: src, type: type, status: 'playing', timestamp: 0, updatedAt: Date.now() });
         }
 
         function setupSync() {
@@ -215,50 +143,38 @@
                 if(!data) return;
                 isRemoteUpdate = true;
 
-                if(data.src !== getCurrentSrc()) playMedia(data.type, data.src);
+                if (data.type === 'youtube') {
+                    // Se o player já tem o vídeo carregado, não recarrega
+                    if (ytPlayer && ytPlayer.getVideoData && ytPlayer.getVideoData().video_id !== data.src) {
+                        playMedia(data.type, data.src);
+                    } else if (!ytPlayer) {
+                        playMedia(data.type, data.src); // Primeiro load
+                    }
+                } else {
+                    if (getCurrentSrc() !== data.src) playMedia(data.type, data.src);
+                }
                 
-                setTimeout(() => {
-                    syncPlayer(data);
-                    isRemoteUpdate = false;
-                }, 500);
+                setTimeout(() => { syncPlayer(data); isRemoteUpdate = false; }, 500);
             });
         }
 
-        // --- AQUI ESTÁ A CORREÇÃO DO LINK ---
         function playMedia(type, src) {
             currentMode = type;
-            
             if (type === 'youtube') {
                 html5Player.style.display = 'none';
                 html5Player.pause();
                 document.getElementById('yt-player').style.display = 'block';
-
-                let vId = "";
-                // Remove espaços em branco
-                src = src.trim();
-
-                if (src.includes('youtu.be/')) {
-                    vId = src.split('youtu.be/')[1];
-                } else if (src.includes('v=')) {
-                    vId = src.split('v=')[1];
-                }
-
-                // LIMPA O LINK (Remove ?si= e outros lixos)
-                if (vId) {
-                    vId = vId.split('?')[0]; 
-                    vId = vId.split('&')[0];
-                }
-
-                if(ytPlayer && ytPlayer.loadVideoById && vId) {
-                    ytPlayer.loadVideoById(vId);
+                
+                // Se o player já existe, carrega o video. Se não, espera o onReady
+                if (ytPlayer && ytPlayer.loadVideoById) {
+                    ytPlayer.loadVideoById(src);
                 }
             } else {
-                // Modo MP4 / Streaming
                 document.getElementById('yt-player').style.display = 'none';
                 if(ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
                 html5Player.style.display = 'block';
-
-                if(type === 'hls' && Hls.isSupported()) {
+                
+                if (type === 'hls' && Hls.isSupported()) {
                     if(hls) hls.destroy();
                     hls = new Hls();
                     hls.loadSource(src);
@@ -266,25 +182,53 @@
                 } else {
                     html5Player.src = src;
                 }
-                html5Player.play().catch(e => console.log("Autoplay bloqueado pelo navegador"));
             }
+        }
+
+        // --- CONFIGURAÇÃO DO PLAYER YOUTUBE (CORREÇÃO DO GIRAR) ---
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('yt-player', {
+                height: '100%', width: '100%',
+                videoId: '', // Inicia vazio
+                playerVars: {
+                    'autoplay': 1,
+                    'controls': 1,
+                    'mute': 1,      // IMPORTANTE: Começa mudo para o navegador não bloquear
+                    'origin': window.location.origin, // IMPORTANTE: Segurança
+                    'rel': 0
+                },
+                events: {
+                    'onReady': (event) => {
+                        console.log("YouTube Player Pronto!");
+                        // Força leitura do banco caso já tenha video
+                        roomRef.once('value', s => { if(s.val()) playMedia(s.val().type, s.val().src); });
+                    },
+                    'onStateChange': (e) => {
+                        if (e.data === 1) sendVideoUpdate('playing', ytPlayer.getCurrentTime());
+                        if (e.data === 2) sendVideoUpdate('paused', ytPlayer.getCurrentTime());
+                    },
+                    'onError': (e) => console.log("Erro YouTube:", e.data)
+                }
+            });
         }
 
         function syncPlayer(data) {
             const player = currentMode === 'youtube' ? ytPlayer : html5Player;
-            const currentTime = currentMode === 'youtube' ? player.getCurrentTime() : player.currentTime;
+            if (!player) return;
+
+            const currentTime = currentMode === 'youtube' ? (player.getCurrentTime ? player.getCurrentTime() : 0) : player.currentTime;
             
-            if(Math.abs(currentTime - data.timestamp) > 2) {
-                if(currentMode === 'youtube') player.seekTo(data.timestamp);
+            if (Math.abs(currentTime - data.timestamp) > 2) {
+                if (currentMode === 'youtube' && player.seekTo) player.seekTo(data.timestamp);
                 else player.currentTime = data.timestamp;
             }
 
-            if(data.status === 'playing') {
-                if(currentMode === 'youtube' && player.getPlayerState() !== 1) player.playVideo();
-                else if(currentMode !== 'youtube' && player.paused) player.play();
+            if (data.status === 'playing') {
+                if (currentMode === 'youtube' && player.getPlayerState && player.getPlayerState() !== 1) player.playVideo();
+                else if (currentMode !== 'youtube' && player.paused) player.play().catch(()=>{});
             } else {
-                if(currentMode === 'youtube' && player.getPlayerState() !== 2) player.pauseVideo();
-                else if(currentMode !== 'youtube' && !player.paused) player.pause();
+                if (currentMode === 'youtube' && player.getPlayerState && player.getPlayerState() !== 2) player.pauseVideo();
+                else if (currentMode !== 'youtube' && !player.paused) player.pause();
             }
         }
 
@@ -294,57 +238,27 @@
         }
 
         function getCurrentSrc() {
-            if(currentMode === 'youtube') return ytPlayer && ytPlayer.getVideoUrl ? ytPlayer.getVideoUrl() : '';
+            if(currentMode === 'youtube') return ''; // Gerenciado por ID
             return html5Player.src;
         }
 
         // --- CHAT ---
         function setupChat() {
-            chatRef.on('child_added', (snapshot) => {
-                const msg = snapshot.val();
-                const chatList = document.getElementById('chatList');
-                const div = document.createElement('div');
-                
-                if(msg.type === 'system') {
-                    div.className = 'msg system';
-                    div.innerText = msg.text;
-                } else {
-                    div.className = 'msg';
-                    div.innerHTML = `<strong>${msg.user}</strong>${msg.text}`;
-                }
-                chatList.appendChild(div);
-                chatList.scrollTop = chatList.scrollHeight;
+            chatRef.on('child_added', (s) => {
+                const msg = s.val();
+                const d = document.createElement('div');
+                d.className = 'msg';
+                d.innerHTML = `<strong>${msg.user}</strong>${msg.text}`;
+                document.getElementById('chatList').appendChild(d);
             });
         }
-
         function sendMsg() {
-            const input = document.getElementById('msgInput');
-            if(!input.value.trim()) return;
-            chatRef.push({ user: currentUser, text: input.value, timestamp: Date.now() });
-            input.value = '';
+            const i = document.getElementById('msgInput');
+            if(i.value) chatRef.push({ user: currentUser, text: i.value });
+            i.value = '';
         }
-
-        function handleChatEnter(e) { if(e.key === 'Enter') sendMsg(); }
-        function copyLink() { navigator.clipboard.writeText(window.location.href); alert("Link Copiado!"); }
-
-        // --- PLAYERS SETUP ---
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('yt-player', {
-                height: '100%', width: '100%', videoId: '',
-                playerVars: { 'autoplay': 1, 'controls': 1, 'rel': 0 },
-                events: {
-                    'onStateChange': (e) => {
-                        if (e.data === 1) sendVideoUpdate('playing', ytPlayer.getCurrentTime());
-                        if (e.data === 2) sendVideoUpdate('paused', ytPlayer.getCurrentTime());
-                    }
-                }
-            });
-        }
-
         html5Player.onplay = () => sendVideoUpdate('playing', html5Player.currentTime);
         html5Player.onpause = () => sendVideoUpdate('paused', html5Player.currentTime);
-        html5Player.onseeked = () => sendVideoUpdate(html5Player.paused?'paused':'playing', html5Player.currentTime);
-
     </script>
 </body>
 </html>
