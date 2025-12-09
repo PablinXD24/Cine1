@@ -196,7 +196,244 @@
     </div>
 
     <script>
-https://be4235.rcr32.ams02.i8yz83pn.com/hls2/09/10364/u8reirne09gf_x/master.m3u8?t=O4sfMwDLQMHL4l0I2kuTudMOKgwU3H3GtEYbNCmpuDA&s=1765313366&e=10800&f=51822713&srv=1055&asn=28573&sp=5500&p=
-    </script>
+// --- 1. CONFIGURAÇÃO FIREBASE ---
+const firebaseConfig = {
+    apiKey: "AIzaSyAzUrQOJcALZmO9vyO8J52XDKL4Q49M7Rg",
+    authDomain: "cine-54caf.firebaseapp.com",
+    databaseURL: "https://cine-54caf-default-rtdb.firebaseio.com",
+    projectId: "cine-54caf",
+    storageBucket: "cine-54caf.firebasestorage.app",
+    messagingSenderId: "345032163360",
+    appId: "1:345032163360:web:7be1fca9c58250c2bf3c45"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let roomRef, user, peer, myStream;
+let isHost = false;
+let currentSrc = ''; // Guarda o link atual para não recarregar à toa
+
+// Elementos
+const streamPlayer = document.getElementById('stream-player');
+const hostPreview = document.getElementById('host-preview');
+const broadcastBtn = document.getElementById('broadcastBtn');
+const unlockBtn = document.getElementById('unlock-btn');
+const ytDiv = document.getElementById('yt-player');
+const html5Player = document.getElementById('html5-player');
+
+function notify(msg, type='info') {
+    const d = document.createElement('div');
+    d.className = `toast`; d.innerText = msg;
+    if(type==='error') d.style.borderLeft = '4px solid var(--error)';
+    document.getElementById('toast-area').appendChild(d);
+    setTimeout(() => d.remove(), 4000);
+}
+
+function enterRoom() {
+    user = document.getElementById('userInput').value || 'Visitante';
+    const room = document.getElementById('roomInput').value || 'geral';
+    
+    document.getElementById('lobby').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    
+    const url = window.location.pathname + '?room=' + room;
+    window.history.pushState({path: url}, '', url);
+
+    roomRef = db.ref(`rooms/${room}`);
+    
+    // Inicia a escuta da sincronia IMEDIATAMENTE
+    setupSync();
+    setupChat();
+    setupWebRTC(); // Inicia P2P (apenas para quem for usar tela compartilhada)
+}
+
+// --- 2. SISTEMA DE SINCRONIA UNIVERSAL (O SEGREDO) ---
+
+// Função chamada quando ALGUÉM clica em Play
+function loadMedia() {
+    const url = document.getElementById('mediaUrl').value.trim();
+    if(!url) return notify("Cole um link primeiro.");
+
+    // ENVIA O COMANDO PARA TODOS (Inclusive para mim mesmo)
+    // Não carregamos o vídeo aqui. Esperamos o Firebase nos avisar.
+    roomRef.update({
+        type: url.includes('youtu') ? 'youtube' : 'html5',
+        src: url,
+        status: 'playing',
+        timestamp: 0,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    
+    notify("Enviando comando para a sala...");
+}
+
+function setupSync() {
+    roomRef.on('value', snap => {
+        const data = snap.val();
+        if(!data || !data.src) return;
+
+        // Se for transmissão de tela (WebRTC), ignoramos o player normal
+        if (data.broadcast && data.broadcast.isLive) return;
+
+        // LÓGICA DE CARREGAMENTO INTELIGENTE
+        // Só recarrega o vídeo se o link mudou
+        if (data.src !== currentSrc) {
+            currentSrc = data.src;
+            playContent(data.type, data.src);
+        }
+
+        // SINCRONIA DE TEMPO E PAUSE
+        syncPlayer(data);
+    });
+}
+
+function playContent(type, src) {
+    // Esconde transmissão e mostra player normal
+    hostPreview.style.display = 'none';
+    streamPlayer.style.display = 'none';
+    
+    if (type === 'youtube') {
+        html5Player.style.display = 'none';
+        ytDiv.style.display = 'block';
+        if(window.ytPlayer && window.ytPlayer.loadVideoById) {
+            const videoId = src.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/)([^#&?]*))/)[1];
+            window.ytPlayer.loadVideoById(videoId);
+        }
+    } else {
+        ytDiv.style.display = 'none';
+        html5Player.style.display = 'block';
+        
+        if (Hls.isSupported() && src.includes('.m3u8')) {
+            if(window.hls) window.hls.destroy();
+            window.hls = new Hls();
+            window.hls.loadSource(src);
+            window.hls.attachMedia(html5Player);
+        } else {
+            html5Player.src = src;
+        }
+        
+        // Tenta dar play (APK precisa disso)
+        html5Player.play().catch(() => unlockBtn.style.display = 'block');
+    }
+}
+
+function syncPlayer(data) {
+    // Apenas HTML5 por enquanto para simplificar
+    if (html5Player.style.display !== 'none') {
+        // Se a diferença de tempo for grande (> 2s), pula para o tempo certo
+        if (Math.abs(html5Player.currentTime - data.timestamp) > 2) {
+            html5Player.currentTime = data.timestamp;
+        }
+        
+        // Play/Pause
+        if (data.status === 'playing' && html5Player.paused) {
+            html5Player.play().catch(()=>{});
+        } else if (data.status === 'paused' && !html5Player.paused) {
+            html5Player.pause();
+        }
+    }
+}
+
+// Eventos do Player (Para eu controlar a sala)
+html5Player.onplay = () => updateServer('playing');
+html5Player.onpause = () => updateServer('paused');
+// Pequeno delay para não flodar o servidor
+let lastUpdate = 0;
+html5Player.ontimeupdate = () => {
+    if (Date.now() - lastUpdate > 2000) { // A cada 2 segundos
+        if (!html5Player.paused) updateServer('playing');
+        lastUpdate = Date.now();
+    }
+};
+
+function updateServer(status) {
+    // Só envia se eu tiver carregado algo
+    if (!currentSrc) return;
+    roomRef.update({
+        status: status,
+        timestamp: html5Player.currentTime,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+}
+
+// --- 3. EXTRAS: YOUTUBE & CHAT ---
+
+function onYouTubeIframeAPIReady() {
+    window.ytPlayer = new YT.Player('yt-player', {
+        height: '100%', width: '100%', videoId: '',
+        playerVars: { 'autoplay': 1, 'controls': 1 },
+        events: {
+            'onStateChange': (e) => {
+                // Sincronia YT básica
+                if(e.data === 1) updateServer('playing'); 
+                if(e.data === 2) updateServer('paused');
+            }
+        }
+    });
+}
+
+function setupChat() {
+    roomRef.child('chat').on('child_added', snap => {
+        const msg = snap.val();
+        const d = document.createElement('div');
+        d.className = 'msg-bubble';
+        d.innerHTML = `<strong style="color:var(--accent)">${msg.user}</strong><br>${msg.text}`;
+        document.getElementById('chatList').appendChild(d);
+        document.getElementById('chatList').scrollTop = 99999;
+    });
+}
+function sendMsg() {
+    const i = document.getElementById('msgInput');
+    if(i.value) roomRef.child('chat').push({ user, text: i.value });
+    i.value = '';
+}
+function shareLink() { navigator.clipboard.writeText(window.location.href); notify("Link copiado!"); }
+function unlockAudio() { html5Player.play(); unlockBtn.style.display = 'none'; }
+
+// --- 4. WEBRTC (TRANSMISSÃO DE TELA) ---
+// Mantido para caso usem no PC, mas não interfere no APK se não usado
+function setupWebRTC() {
+    peer = new Peer(undefined, { config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} });
+    
+    peer.on('open', id => {
+        roomRef.child('broadcast').on('value', snap => {
+            const data = snap.val();
+            if (data && data.isLive && data.hostPeerId !== peer.id) {
+                notify(`Recebendo transmissão de ${data.hostName}`);
+                peer.connect(data.hostPeerId);
+                // Esconde players locais
+                html5Player.style.display = 'none';
+                ytDiv.style.display = 'none';
+                streamPlayer.style.display = 'block';
+            }
+        });
+    });
+
+    peer.on('call', call => {
+        call.answer(null);
+        call.on('stream', stream => {
+            streamPlayer.srcObject = stream;
+            streamPlayer.play().catch(() => unlockBtn.style.display = 'block');
+        });
+    });
+}
+
+// Funções de Host (Só funcionam no PC)
+async function startBroadcast() {
+    try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({video:{cursor:"always"}, audio:true});
+        isHost = true;
+        hostPreview.srcObject = stream;
+        hostPreview.style.display = 'block';
+        roomRef.child('broadcast').set({ hostPeerId: peer.id, isLive: true, hostName: user });
+        
+        peer.on('connection', conn => { peer.call(conn.peer, stream); });
+        stream.getVideoTracks()[0].onended = () => {
+            roomRef.child('broadcast').set({ isLive: false });
+            hostPreview.style.display = 'none';
+            isHost = false;
+        };
+    } catch (e) { notify("Erro: Recurso indisponível no celular."); }
+}    </script>
 </body>
 </html>
