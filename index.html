@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineSync Pro - Transmissão</title>
+    <title>CineSync Pro - Transmissão P2P</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- ESTÉTICA APPLE PRO LIQUID GLASS (MANTIDA) --- */
+        /* --- ESTÉTICA APPLE PRO LIQUID GLASS --- */
         :root {
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.7);
@@ -30,7 +29,7 @@
             display: flex; flex-direction: column;
         }
         
-        /* FUNDO AURORA LIQUID */
+        /* FUNDO AURORA */
         .bg {
             position: fixed; inset: 0; z-index: -2;
             background: radial-gradient(circle at top left, #4F46E5, transparent 50%),
@@ -38,13 +37,14 @@
                         radial-gradient(circle at center, #0F172A, #000000);
             background-size: 150% 150%;
         }
+        /* Efeito Noise */
         .bg::after {
             content: ''; position: absolute; inset: 0;
             background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MDAnIGhlaWdodD0nNDAwJz48ZmlsdGVyIGlkPSdhJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjYnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjYSknIG9wYWNpdHk9JzAuMDUnLz48L3N2Zz4=');
             opacity: 0.3; mix-blend-mode: overlay; z-index: -1;
         }
 
-        /* GLASS PRO ULTIMATE */
+        /* GLASS PRO */
         .glass {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(50px) saturate(150%);
@@ -72,10 +72,9 @@
         }
         button:hover { transform: scale(1.03); filter: brightness(1.1); }
         
-        /* Estilo especial para o botão de transmissão */
         .btn-broadcast {
             background: var(--error); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4);
-            display: flex; align-items: center; gap: 10px;
+            display: flex; align-items: center; gap: 10px; justify-content: center;
         }
         .btn-broadcast.active {
             background: var(--success); box-shadow: 0 4px 25px rgba(50, 215, 75, 0.5);
@@ -83,7 +82,7 @@
         }
         @keyframes pulseSuccess { 0% { box-shadow: 0 0 0 0 rgba(50, 215, 75, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(50, 215, 75, 0); } 100% { box-shadow: 0 0 0 0 rgba(50, 215, 75, 0); } }
 
-        .live-indicator { width: 12px; height: 12px; background: white; border-radius: 50%; display: none; }
+        .live-indicator { width: 10px; height: 10px; background: white; border-radius: 50%; display: none; }
         .btn-broadcast.active .live-indicator { display: block; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
 
@@ -108,13 +107,13 @@
         
         #app { display: none; height: 100%; padding: 30px; box-sizing: border-box; }
         .grid { display: grid; grid-template-columns: 1fr 400px; grid-template-rows: auto 1fr; gap: 30px; height: 100%; max-width: 2000px; margin: 0 auto; }
-        .controls { grid-column: 1 / -1; padding: 20px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap;}
+        .controls { grid-column: 1 / -1; padding: 20px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
         
-        .video-box { position: relative; background: #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.1);}
+        .video-box { position: relative; background: #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.1); }
         
         /* PLAYERS */
-        #yt-player, #html5-player, #stream-player { width: 100%; height: 100%; position: absolute; object-fit: contain; }
-        #html5-player, #stream-player { display: none; }
+        #stream-player { width: 100%; height: 100%; position: absolute; object-fit: contain; }
+        #host-preview { display:none; width: 100%; height: 100%; position: absolute; object-fit: contain; }
 
         /* CHAT */
         .chat-box { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
@@ -148,11 +147,11 @@
     <div id="app">
         <div class="grid">
             <div class="controls glass">
-                <input type="text" id="mediaUrl" placeholder="Link do filme (para o Host)..." style="flex: 2; min-width: 200px;">
+                <div style="flex: 2; color: #aaa; font-size: 0.9rem;">
+                    * Para transmitir, abra o filme em OUTRA ABA, clique em Transmitir e escolha aquela aba com áudio.
+                </div>
                 
-                <button onclick="loadMediaLocal()" title="Carrega o vídeo apenas para você (antes de transmitir)">▶ Play Local</button>
-                
-                <button id="broadcastBtn" class="btn-broadcast" onclick="startBroadcast()" title="Compartilhar sua tela e áudio com a sala">
+                <button id="broadcastBtn" class="btn-broadcast" onclick="startBroadcast()" title="Compartilhar sua tela">
                     <div class="live-indicator"></div>
                     <span>📡 Transmitir Tela</span>
                 </button>
@@ -161,9 +160,10 @@
             </div>
             
             <div class="video-box glass">
-                <div id="yt-player"></div>
-                <video id="html5-player" controls playsinline></video>
+                <video id="host-preview" muted playsinline></video>
                 <video id="stream-player" controls playsinline autoplay></video>
+                
+                <button id="unlock-btn" onclick="unlockAudio()" style="position:absolute; display:none; z-index:50; background:white; color:black;">🔊 Ativar Som da Live</button>
             </div>
             
             <div class="chat-box glass">
@@ -178,7 +178,7 @@
     </div>
 
     <script>
-        // FIREBASE
+        // --- 1. CONFIGURAÇÃO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyAzUrQOJcALZmO9vyO8J52XDKL4Q49M7Rg",
             authDomain: "cine-54caf.firebaseapp.com",
@@ -194,15 +194,16 @@
         let roomRef, user, peer, myStream;
         let isHost = false;
         
-        // Players
-        const html5Player = document.getElementById('html5-player');
+        // Elementos
         const streamPlayer = document.getElementById('stream-player');
-        const ytDiv = document.getElementById('yt-player');
+        const hostPreview = document.getElementById('host-preview');
         const broadcastBtn = document.getElementById('broadcastBtn');
+        const unlockBtn = document.getElementById('unlock-btn');
 
         function notify(msg, type='info') {
             const d = document.createElement('div');
             d.className = `toast`; d.innerText = msg;
+            if(type==='error') d.style.borderLeft = '4px solid var(--error)';
             document.getElementById('toast-area').appendChild(d);
             setTimeout(() => d.remove(), 4000);
         }
@@ -218,64 +219,83 @@
 
             roomRef = db.ref(`rooms/${room}`);
             
-            // Inicializa PeerJS (Servidor público gratuito para conectar os pontos)
+            // --- 2. CONFIGURAÇÃO DO PEERJS COM SERVIDORES STUN (CORREÇÃO DE CONEXÃO) ---
             peer = new Peer(undefined, {
-                host: 'peerjs-server.herokuapp.com', secure: true, port: 443,
+                // Configuração crucial para atravessar roteadores
+                config: {
+                    'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]
+                }
             });
 
             peer.on('open', id => {
-                console.log('Meu ID P2P:', id);
-                roomRef.child('chat').push({user: '🤖', text: `${user} entrou na sala.`});
-                // Verifica se já tem transmissão rolando
-                checkBroadcastStatus();
+                console.log('Meu ID:', id);
+                roomRef.child('chat').push({user: '🤖', text: `${user} entrou.`});
+                // Começa a escutar se tem live
+                listenForBroadcast();
             });
 
-            // Se alguém me ligar (sou convidado recebendo stream)
+            // Se eu receber uma ligação (sou convidado)
             peer.on('call', call => {
                 call.answer(null); // Atende
-                call.on('stream', hostStream => {
-                    notify("🎥 Conectado à transmissão do Host!", "success");
-                    showStreamPlayer(hostStream);
+                call.on('stream', remoteStream => {
+                    notify("🎥 Recebendo vídeo do Host...", "success");
+                    showStream(remoteStream);
                 });
+                call.on('error', err => notify("Erro na conexão P2P: " + err, "error"));
             });
 
             setupChat();
         }
 
-        // --- LÓGICA DE TRANSMISSÃO (HOST) ---
+        // --- 3. LÓGICA DE TRANSMISSÃO (HOST) ---
         async function startBroadcast() {
-            if(isHost) return stopBroadcast(); // Se já é host, o botão serve para parar
+            if(isHost) return stopBroadcast();
 
             try {
-                notify("Selecione a GUIA do navegador e marque 'Compartilhar Áudio'.");
-                // Pede para capturar a tela (COM AUDIO)
+                // Captura Tela
                 const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "always", frameRate: 30 },
-                    audio: true // Essencial para transmitir o som do filme
+                    video: { cursor: "always" },
+                    audio: true // IMPORTANTE: Captura som da aba
                 });
 
                 myStream = stream;
                 isHost = true;
                 
-                // Visual do botão
+                // Mostra preview pro host (mudo para não dar eco)
+                hostPreview.srcObject = stream;
+                hostPreview.style.display = 'block';
+                hostPreview.play();
+                streamPlayer.style.display = 'none';
+
+                // Atualiza Botão
                 broadcastBtn.classList.add('active');
                 broadcastBtn.querySelector('span').innerText = 'Parar Transmissão';
                 
-                // Avisa o Firebase que eu sou o Host
+                // Salva ID no Firebase para convidados conectarem
                 roomRef.child('broadcast').set({
                     hostPeerId: peer.id,
                     isLive: true,
                     hostName: user
                 });
 
-                // Se eu parar a transmissão pelo navegador
+                // Se parar pelo navegador
                 stream.getVideoTracks()[0].onended = () => { stopBroadcast(); };
+                
+                // Lida com novas conexões
+                peer.on('connection', conn => {
+                    // Quando alguém conecta, ligamos de volta com o stream
+                    const call = peer.call(conn.peer, myStream);
+                });
 
-                notify("Você está transmitindo! Dê play no seu filme local.", "success");
+                notify("Você está transmitindo! Abra o filme na outra aba.", "success");
 
             } catch (err) {
                 console.error(err);
-                notify("Erro ao compartilhar tela: " + err.message, "error");
+                notify("Erro ao iniciar: " + err.message, "error");
                 stopBroadcast();
             }
         }
@@ -285,75 +305,50 @@
             broadcastBtn.classList.remove('active');
             broadcastBtn.querySelector('span').innerText = '📡 Transmitir Tela';
             roomRef.child('broadcast').set({ isLive: false });
+            hostPreview.style.display = 'none';
             isHost = false;
             notify("Transmissão encerrada.");
         }
 
-        // --- LÓGICA DE RECEPÇÃO (CONVIDADOS) ---
-        function checkBroadcastStatus() {
+        // --- 4. LÓGICA DE RECEPÇÃO (CONVIDADOS) ---
+        function listenForBroadcast() {
             roomRef.child('broadcast').on('value', snap => {
                 const data = snap.val();
-                
-                if (isHost) return; // Se sou host, ignoro
+                if (isHost) return; // Host ignora
 
                 if (data && data.isLive && data.hostPeerId) {
-                    // Tem transmissão ativa
                     if (data.hostPeerId !== peer.id) {
                         notify(`Conectando à tela de ${data.hostName}...`);
-                        connectToHost(data.hostPeerId);
+                        // Conecta ao host para pedir o stream
+                        const conn = peer.connect(data.hostPeerId);
+                        conn.on('open', () => {
+                            console.log("Conectado ao sinalizador do host.");
+                        });
                     }
                 } else {
-                    // Transmissão acabou
-                    streamPlayer.style.display = 'none';
                     streamPlayer.srcObject = null;
-                    // Se quiser voltar a mostrar os players locais:
-                    // html5Player.style.display = 'block';
+                    streamPlayer.style.display = 'none';
                 }
             });
         }
 
-        function connectToHost(hostId) {
-            // Liga para o host para receber o stream
-            const call = peer.call(hostId, new MediaStream()); 
-            call.on('stream', hostStream => {
-                showStreamPlayer(hostStream);
-            });
-            call.on('error', (err) => notify("Erro na conexão P2P.", "error"));
-        }
-
-        function showStreamPlayer(stream) {
-            ytDiv.style.display = 'none';
-            html5Player.style.display = 'none';
+        function showStream(stream) {
+            hostPreview.style.display = 'none';
             streamPlayer.style.display = 'block';
             streamPlayer.srcObject = stream;
-            // Importante para celulares:
-            streamPlayer.play().catch(e => {
-                notify("Clique no vídeo para liberar o áudio da transmissão!");
-            });
+            
+            const playPromise = streamPlayer.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    notify("Clique no botão para liberar o som!", "error");
+                    unlockBtn.style.display = 'block';
+                });
+            }
         }
 
-        // --- CARREGAR VÍDEO LOCAL (PARA O HOST PREPARAR) ---
-        function loadMediaLocal() {
-            const url = document.getElementById('mediaUrl').value.trim();
-            if(!url) return notify("Cole um link primeiro.");
-
-            ytDiv.style.display = 'none';
-            streamPlayer.style.display = 'none';
-            html5Player.style.display = 'block';
-
-            if (url.includes('youtu')) {
-                notify("⚠️ Para YouTube, abra o vídeo em outra aba e transmita aquela aba.");
-            } else if (url.includes('.m3u8')) {
-                if(Hls.isSupported()) {
-                    if(hls) hls.destroy();
-                    hls = new Hls();
-                    hls.loadSource(url);
-                    hls.attachMedia(html5Player);
-                }
-            } else {
-                html5Player.src = url;
-            }
-            html5Player.play().catch(()=>notify("Clique para dar play."));
+        function unlockAudio() {
+            streamPlayer.play();
+            unlockBtn.style.display = 'none';
         }
 
         // --- CHAT ---
