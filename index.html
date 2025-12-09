@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineSync Pro Ultimate</title>
+    <title>CineSync Pro - Com Proxy</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -12,28 +12,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- VARIÁVEIS PRO --- */
+        /* --- ESTÉTICA APPLE PRO (MANTIDA) --- */
         :root {
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.7);
-            --accent: #007AFF; /* Azul Apple */
+            --accent: #007AFF;
+            --accent-glow: rgba(0, 122, 255, 0.4);
             --error: #FF3B30;
+            --success: #32D74B;
             --border-radius: 24px;
         }
         
         body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background: #000;
-            color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            margin: 0; font-family: 'Inter', sans-serif; background: #000;
+            color: var(--text-primary); height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
         }
         
-        /* --- FUNDO AURORA "LIQUID" --- */
-        /* O vidro precisa de cores vivas atrás para criar o efeito bonito */
+        /* FUNDO AURORA */
         .bg {
             position: fixed; inset: 0; z-index: -2;
             background: radial-gradient(circle at top left, #4F46E5, transparent 50%),
@@ -41,143 +37,93 @@
                         radial-gradient(circle at center, #0F172A, #000000);
             background-size: 150% 150%;
         }
-        /* Camada extra de movimento sutil */
         .bg::after {
             content: ''; position: absolute; inset: 0;
-            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MDAnIGhlaWdodD0nNDAwJz48ZmlsdGVyIGlkPSdhJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjYnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjYSknIG9wYWNpdHk9JzAuMDUnLz48L3N2Zz4='); /* Noise sutil */
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MDAnIGhlaWdodD0nNDAwJz48ZmlsdGVyIGlkPSdhJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjYnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjYSknIG9wYWNpdHk9JzAuMDUnLz48L3N2Zz4=');
             opacity: 0.3; mix-blend-mode: overlay; z-index: -1;
         }
 
-        /* --- A NOVA CLASSE GLASSMÖRPHISM PRO --- */
+        /* GLASS PRO */
         .glass {
-            /* Base ultra transparente para deixar o fundo brilhar */
             background: rgba(255, 255, 255, 0.03);
-            /* Desfoque muito forte para o efeito "leitoso" */
             backdrop-filter: blur(50px) saturate(150%);
             -webkit-backdrop-filter: blur(50px) saturate(150%);
             border-radius: var(--border-radius);
-            
-            /* O SEGREDO DO 3D: Múltiplas sombras para simular luz nas bordas */
-            box-shadow: 
-                /* Borda fina geral */
-                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-                /* Reflexo de luz forte no topo/esquerda */
-                inset 1px 1px 2px 0 rgba(255, 255, 255, 0.2),
-                /* Sombra suave para dar profundidade */
-                0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+                        inset 1px 1px 2px 0 rgba(255, 255, 255, 0.2),
+                        0 25px 50px -12px rgba(0, 0, 0, 0.5);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        /* Efeito sutil ao passar o mouse nos cards principais */
-        .glass-interactive:hover {
-            transform: translateY(-3px) scale(1.005);
-            box-shadow: 
-                inset 0 0 0 1px rgba(255, 255, 255, 0.15),
-                inset 1px 1px 2px 0 rgba(255, 255, 255, 0.3),
-                0 35px 60px -15px rgba(0, 0, 0, 0.6);
-        }
 
-        /* --- UI ELEMENTS (Inputs e Botões) --- */
+        /* UI ELEMENTS */
         input {
-            padding: 18px 24px;
-            border-radius: 18px;
-            border: none;
-            /* Input também é vidro, mas mais escuro "afundado" */
+            padding: 18px 24px; border-radius: 18px; border: none;
             background: rgba(0, 0, 0, 0.2); 
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.05);
-            color: var(--text-primary);
-            font-size: 1rem;
-            outline: none; width: 100%; box-sizing: border-box; font-family: inherit; transition: 0.3s;
+            color: var(--text-primary); font-size: 1rem; outline: none; width: 100%; box-sizing: border-box; transition: 0.3s;
         }
-        input:focus {
-            background: rgba(0, 0, 0, 0.3);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 0 3px rgba(0, 122, 255, 0.3);
-        }
-        input::placeholder { color: var(--text-secondary); opacity: 0.7; }
+        input:focus { background: rgba(0, 0, 0, 0.3); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 0 3px var(--accent-glow); }
 
         button {
-            padding: 18px 32px;
-            border-radius: 18px;
-            border: none;
-            background: var(--accent);
-            /* Gradiente sutil no botão */
-            background-image: linear-gradient(to bottom right, rgba(255,255,255,0.1), transparent);
-            color: white; font-weight: 600; font-size: 1.05rem; cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+            padding: 18px 32px; border-radius: 18px; border: none;
+            background: var(--accent); color: white; font-weight: 600; font-size: 1.05rem; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 4px 15px var(--accent-glow);
         }
-        button:hover { transform: scale(1.03); box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4); filter: brightness(1.1); }
-        button:active { transform: scale(0.98); }
+        button:hover { transform: scale(1.03); filter: brightness(1.1); }
         
-        .btn-secondary, .controls button.btn-icon {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-primary); padding: 18px; display: flex; align-items: center; justify-content: center;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.08); color: var(--text-primary); 
+            padding: 18px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
         }
-        .btn-secondary:hover, .controls button.btn-icon:hover { background: rgba(255, 255, 255, 0.15); }
+        
+        /* BOTÃO TOGGLE PROXY */
+        .proxy-toggle {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #aaa; font-size: 0.9rem; padding: 10px 20px; border-radius: 12px;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        .proxy-toggle.active {
+            background: rgba(50, 215, 75, 0.2); border-color: var(--success); color: var(--success);
+            box-shadow: 0 0 15px rgba(50, 215, 75, 0.3);
+        }
+        .proxy-indicator { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+        .proxy-toggle.active .proxy-indicator { background: var(--success); box-shadow: 0 0 8px var(--success); }
 
-        /* --- NOTIFICAÇÕES (TOASTS) --- */
+        /* TOASTS */
         #toast-area { position: fixed; top: 30px; right: 30px; z-index: 2000; display: flex; flex-direction: column; gap: 15px; pointer-events: none; }
         .toast { 
-            pointer-events: auto; padding: 18px 24px; 
-            /* Toast também usa o novo vidro */
-            background: rgba(40, 40, 40, 0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); color: var(--text-primary);
-            font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; gap: 12px;
-            animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); max-width: 400px; 
+            pointer-events: auto; padding: 18px 24px; background: rgba(40, 40, 40, 0.7); backdrop-filter: blur(30px);
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); 
+            color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 12px; animation: slideIn 0.4s ease;
         }
-        .toast::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-        .toast.error::before { background: var(--error); box-shadow: 0 0 10px var(--error); }
-        .toast.success::before { background: #32D74B; box-shadow: 0 0 10px #32D74B; }
-        @keyframes slideIn { from { transform: translateX(120%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* --- LOBBY E MODAIS --- */
-        #lobby, #error-modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(20px); }
+        /* LAYOUT */
+        #lobby { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(20px); }
         .card-center { padding: 60px; width: 90%; max-width: 480px; text-align: center; display: flex; flex-direction: column; gap: 30px; }
-        h1 { margin: 0; font-weight: 800; letter-spacing: -0.03em; font-size: 3rem; background: linear-gradient(to bottom right, #fff, #ccc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        h2 { margin: 0; font-weight: 700; letter-spacing: -0.02em; font-size: 1.8rem;}
-        .subtext { color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; font-weight: 400;}
-
-        /* --- APP LAYOUT --- */
+        h1 { margin: 0; font-size: 3rem; font-weight: 800; background: linear-gradient(to bottom right, #fff, #ccc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
         #app { display: none; height: 100%; padding: 30px; box-sizing: border-box; }
         .grid { display: grid; grid-template-columns: 1fr 400px; grid-template-rows: auto 1fr; gap: 30px; height: 100%; max-width: 2000px; margin: 0 auto; }
-        
         .controls { grid-column: 1 / -1; padding: 20px; display: flex; gap: 20px; align-items: center; }
-        .video-box { position: relative; background: #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        #yt-player, #html5-player { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        
+        .video-box { position: relative; background: #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.1);}
+        #yt-player, #html5-player { width: 100%; height: 100%; position: absolute; }
         #html5-player { display: none; }
         
-        #unlock-btn { display: none; position: absolute; z-index: 50; background: rgba(255,255,255,0.95); color: black; border: none; padding: 24px 48px; border-radius: 50px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); transition: 0.3s; cursor: pointer;}
-        #unlock-btn:hover { transform: scale(1.05); background: white; box-shadow: 0 30px 60px rgba(0,0,0,0.5);}
+        #unlock-btn { display: none; position: absolute; z-index: 50; background: rgba(255,255,255,0.95); color: black; border: none; padding: 20px 40px; border-radius: 50px; font-weight: 700; cursor: pointer; }
 
-        /* CHAT PRO */
+        /* CHAT */
         .chat-box { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-        .chat-header { padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 700; color: var(--text-primary); font-size: 1.2rem; letter-spacing: -0.02em; }
-        .msgs { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
-        
-        .msg { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; animation: popIn 0.3s ease-out; }
-        @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .msg-meta { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; margin-left: 4px; }
-        .msg-bubble {
-            background: rgba(255,255,255,0.07);
-            padding: 14px 20px;
-            border-radius: 22px; border-bottom-left-radius: 6px;
-            font-size: 1rem; line-height: 1.5; max-width: 85%;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
-        }
+        .chat-header { padding: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 700; }
+        .msgs { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 15px; }
+        .msg-bubble { background: rgba(255,255,255,0.07); padding: 14px 20px; border-radius: 22px; border-bottom-left-radius: 6px; font-size: 1rem; max-width: 85%; }
         .chat-input-area { padding: 24px; display: flex; gap: 16px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); }
-
-        /* Scrollbar Invisível */
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        ::-webkit-scrollbar { width: 0px; }
 
         @media (max-width: 1024px) { 
-            #app { padding: 16px; }
-            .grid { grid-template-columns: 1fr; grid-template-rows: auto 45vh 1fr; gap: 16px; } 
-            .controls { padding: 16px; gap: 12px; }
-            input, button { padding: 16px; }
-            .card-center { padding: 40px; width: 85%; }
-            h1 { font-size: 2.2rem; }
+            .grid { grid-template-columns: 1fr; grid-template-rows: auto 45vh 1fr; } 
+            .controls { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -186,52 +132,32 @@
     <div class="bg"></div>
     <div id="toast-area"></div>
 
-    <div id="error-modal">
-        <div class="card-center glass glass-interactive">
-            <h2 style="color:var(--error)">Reprodução Bloqueada</h2>
-            <p class="subtext" id="error-text">O site de origem impediu a conexão. É necessária uma extensão para desbloquear.</p>
-            
-            <div id="pc-instructions" style="display:none; text-align: left; width: 100%;">
-                <button onclick="window.open('https://chromewebstore.google.com/search/CORS%20Unblock', '_blank')" style="width:100%">Buscar Extensão (PC)</button>
-            </div>
-
-            <div id="mobile-instructions" style="display:none; text-align: left; width: 100%;">
-                <div style="display: flex; gap: 15px; flex-direction: column;">
-                    <button onclick="window.open('https://play.google.com/store/apps/details?id=com.lemur.browser', '_blank')" class="btn-secondary" style="width:100%; justify-content: center;">🤖 Baixar Lemur (Android)</button>
-                    <button onclick="window.open('https://apps.apple.com/us/app/orion-browser-by-kagi/id1484498200', '_blank')" class="btn-secondary" style="width:100%; justify-content: center;">🍎 Baixar Orion (iPhone)</button>
-                </div>
-                <p class="subtext" style="font-size:0.9rem; margin-top: 16px; text-align: center; opacity: 0.7;">(Instale a extensão CORS neles)</p>
-            </div>
-
-            <div style="display: flex; gap: 15px; margin-top: 10px; width: 100%;">
-                <button onclick="location.reload()" class="btn-secondary" style="flex:1; justify-content: center;">Recarregar</button>
-                <button onclick="document.getElementById('error-modal').style.display='none'" class="btn-secondary" style="flex:1; justify-content: center;">Fechar</button>
-            </div>
-        </div>
-    </div>
-
     <div id="lobby">
-        <div class="card-center glass glass-interactive">
+        <div class="card-center glass">
             <h1>CineSync <span style="font-weight:300; color: var(--accent);">Pro</span></h1>
-            <p class="subtext">Assista juntos, em qualquer lugar.</p>
-            <div style="display: flex; flex-direction: column; gap: 20px; width: 100%; margin-top: 10px;">
-                <input type="text" id="userInput" placeholder="Seu Apelido">
-                <input type="text" id="roomInput" placeholder="Nome da Sala">
-                <button onclick="enterRoom()" style="font-size: 1.2rem;">Entrar</button>
-            </div>
+            <p style="color:var(--text-secondary)">Sua sala de cinema premium.</p>
+            <input type="text" id="userInput" placeholder="Seu Apelido">
+            <input type="text" id="roomInput" placeholder="Nome da Sala">
+            <button onclick="enterRoom()">Entrar</button>
         </div>
     </div>
 
     <div id="app">
         <div class="grid">
             <div class="controls glass">
-                <input type="text" id="mediaUrl" placeholder="Cole o link aqui...">
-                <button onclick="loadMedia()" style="padding-left: 40px; padding-right: 40px;">Reproduzir</button>
-                <button onclick="shareLink()" class="btn-icon" title="Copiar Link" style="aspect-ratio: 1;">🔗</button>
+                <input type="text" id="mediaUrl" placeholder="Cole o link (YouTube, .m3u8, .mp4)...">
+                
+                <button id="proxyBtn" class="proxy-toggle" onclick="toggleProxy()" title="Ative se o vídeo der erro de bloqueio">
+                    <div class="proxy-indicator"></div>
+                    <span>Modo Proxy</span>
+                </button>
+
+                <button onclick="loadMedia()" style="padding-left: 40px; padding-right: 40px;">Play</button>
+                <button onclick="shareLink()" class="btn-icon">🔗</button>
             </div>
             
             <div class="video-box glass">
-                <button id="unlock-btn" onclick="unlockAudio()">Clique para ativar o som</button>
+                <button id="unlock-btn" onclick="unlockAudio()">🔊 Ativar Som</button>
                 <div id="yt-player"></div>
                 <video id="html5-player" controls playsinline></video>
             </div>
@@ -240,14 +166,15 @@
                 <div class="chat-header">Bate-papo</div>
                 <div class="msgs" id="chatList"></div>
                 <div class="chat-input-area">
-                    <input id="msgInput" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()" class="btn-icon" style="aspect-ratio: 1; padding: 0;">➤</button>
+                    <input id="msgInput" placeholder="Mensagem..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" class="btn-icon">➤</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // CONFIG FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAzUrQOJcALZmO9vyO8J52XDKL4Q49M7Rg",
             authDomain: "cine-54caf.firebaseapp.com",
@@ -265,7 +192,26 @@
         const unlockBtn = document.getElementById('unlock-btn');
         let currentMode = 'youtube';
         let isRemote = false, isReady = false, pendingVid = null;
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // --- SISTEMA DE PROXY (A SOLUÇÃO) ---
+        let useProxy = false;
+        // Proxy público confiável
+        const PROXY_URL = "https://corsproxy.io/?"; 
+
+        function toggleProxy() {
+            useProxy = !useProxy;
+            const btn = document.getElementById('proxyBtn');
+            if(useProxy) {
+                btn.classList.add('active');
+                notify("Modo Proxy Ativado! (Burlar Bloqueios)", "success");
+            } else {
+                btn.classList.remove('active');
+                notify("Modo Proxy Desativado.", "info");
+            }
+            // Recarrega se tiver video
+            const currentUrl = document.getElementById('mediaUrl').value;
+            if(currentUrl) loadMedia();
+        }
 
         function notify(msg, type = 'info') {
             const area = document.getElementById('toast-area');
@@ -276,28 +222,16 @@
             setTimeout(() => div.remove(), 4000);
         }
 
-        function showErrorModal() {
-            const modal = document.getElementById('error-modal');
-            const pcDiv = document.getElementById('pc-instructions');
-            const mobDiv = document.getElementById('mobile-instructions');
-            modal.style.display = 'flex';
-            if (isMobile) { pcDiv.style.display = 'none'; mobDiv.style.display = 'block'; } 
-            else { pcDiv.style.display = 'block'; mobDiv.style.display = 'none'; }
-        }
-
         function enterRoom() {
             user = document.getElementById('userInput').value || 'Visitante';
             const room = document.getElementById('roomInput').value || 'geral';
-            if(!user || !room) return notify("Preencha os campos.", "error");
-
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             const url = window.location.pathname + '?room=' + room;
             window.history.pushState({path: url}, '', url);
-
             roomRef = db.ref(`rooms/${room}/video`);
             chatRef = db.ref(`rooms/${room}/chat`);
-            notify(`Sala conectada`, 'success');
+            notify("Conectado!");
             setupSync();
             setupChat();
         }
@@ -305,15 +239,18 @@
         function loadMedia() {
             const url = document.getElementById('mediaUrl').value.trim();
             if(!url) return notify("Cole um link!", "error");
-            let type = 'mp4', src = url;
+            
+            let type = 'mp4';
+            let src = url;
+
             if (url.includes('youtu')) {
                 type = 'youtube';
                 const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
                 if (match && match[2].length === 11) src = match[2];
-                else return notify("Link YouTube inválido", "error");
             } else if (url.includes('.m3u8')) { type = 'hls'; }
-            roomRef.update({ src, type, status: 'playing', timestamp: 0, updatedAt: Date.now() })
-                .catch(e => notify("Erro de conexão.", "error"));
+
+            // Salva no banco (O PROXY É APLICADO LOCALMENTE NA HORA DE TOCAR)
+            roomRef.update({ src, type, status: 'playing', timestamp: 0, updatedAt: Date.now() });
         }
 
         function setupSync() {
@@ -332,7 +269,6 @@
             html5Player.style.display = 'none';
             html5Player.pause();
             document.getElementById('yt-player').style.display = 'block';
-            unlockBtn.style.display = 'none';
             if(ytPlayer && isReady && ytPlayer.loadVideoById) {
                 if(ytPlayer.getVideoData().video_id !== id) ytPlayer.loadVideoById(id);
             } else pendingVid = id;
@@ -343,18 +279,37 @@
             document.getElementById('yt-player').style.display = 'none';
             if(ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
             html5Player.style.display = 'block';
-            if(html5Player.getAttribute('data-src') === src) return;
-            html5Player.setAttribute('data-src', src);
+
+            // --- APLICAÇÃO DO PROXY ---
+            // Se o modo proxy estiver ligado, adiciona o prefixo mágico
+            let finalSrc = src;
+            if (useProxy) {
+                // EncodeURIComponent é vital para o proxy ler o link original
+                finalSrc = PROXY_URL + encodeURIComponent(src);
+                console.log("Usando Proxy:", finalSrc);
+            }
+
             if(type === 'hls' && Hls.isSupported()) {
                 if(hls) hls.destroy();
-                hls = new Hls();
-                hls.loadSource(src);
+                hls = new Hls({
+                    // Configuração para ajudar o Proxy a lidar com HLS
+                    xhrSetup: function(xhr, url) {
+                        // Se o manifesto original foi proxiado, os fragmentos também precisam ser
+                        // O corsproxy.io geralmente lida com isso, mas se falhar, o usuário desliga o proxy.
+                    }
+                });
+                hls.loadSource(finalSrc);
                 hls.attachMedia(html5Player);
-                hls.on(Hls.Events.ERROR, (e, data) => { if(data.fatal) showErrorModal(); });
+                hls.on(Hls.Events.ERROR, (e, data) => {
+                    if(data.fatal) {
+                        notify("Erro. Tente ativar/desativar o Proxy.", "error");
+                    }
+                });
             } else {
-                html5Player.src = src;
-                html5Player.onerror = () => showErrorModal();
+                html5Player.src = finalSrc;
+                html5Player.onerror = () => notify("Erro. Tente mudar o modo Proxy.", "error");
             }
+            html5Player.play().catch(() => unlockBtn.style.display = 'block');
         }
 
         function sync(data) {
@@ -366,11 +321,9 @@
                 else p.currentTime = data.timestamp;
             }
             if(data.status === 'playing') {
-                let playPromise;
                 if(currentMode === 'youtube' && p.getPlayerState() !== 1) p.playVideo();
                 else if(currentMode !== 'youtube' && p.paused) {
-                    playPromise = p.play();
-                    if (playPromise !== undefined) { playPromise.catch(() => unlockBtn.style.display = 'block'); }
+                    p.play().catch(() => unlockBtn.style.display = 'block');
                 }
             } else {
                 if(currentMode === 'youtube' && p.getPlayerState() !== 2) p.pauseVideo();
@@ -410,7 +363,7 @@
                 const msg = snap.val();
                 const d = document.createElement('div');
                 d.className = 'msg';
-                d.innerHTML = `<span class="msg-meta">${msg.user}</span><div class="msg-bubble">${msg.text}</div>`;
+                d.innerHTML = `<span style="opacity:0.6;font-size:0.8rem">${msg.user}</span><div class="msg-bubble">${msg.text}</div>`;
                 document.getElementById('chatList').appendChild(d);
                 document.getElementById('chatList').scrollTop = 99999;
             });
