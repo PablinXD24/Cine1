@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineSync - Sincronia Perfeita</title>
+    <title>CineSync - Pro</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -12,76 +12,96 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
-        :root { --glass-bg: rgba(255, 255, 255, 0.1); --glass-border: rgba(255, 255, 255, 0.2); --accent: #00d2ff; }
-        body { margin: 0; font-family: 'Poppins', sans-serif; background: #121212; color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden;}
+        :root { --glass: rgba(255, 255, 255, 0.1); --border: rgba(255, 255, 255, 0.2); --accent: #00d2ff; --error: #ff4757; --success: #2ed573; }
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: #121212; color: white; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         /* Fundo Animado */
-        .bg-animate {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: linear-gradient(-45deg, #000000, #1a1a1a, #2c3e50, #000000);
-            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
-        }
-        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e); background-size: 400% 400%; animation: bgAnim 15s ease infinite; }
+        @keyframes bgAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        .glass { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; }
-        
-        #lobby { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); }
-        .login-card { padding: 40px; width: 350px; text-align: center; display: flex; flex-direction: column; gap: 15px; }
-        input { padding: 15px; border-radius: 10px; border: 1px solid #555; background: #222; color: white; width: 100%; box-sizing: border-box; }
-        button { padding: 15px; border-radius: 10px; border: none; background: var(--accent); cursor: pointer; font-weight: bold; transition: 0.2s; }
-        button:hover { transform: scale(1.05); }
+        .glass { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 12px; }
 
-        #app { display: none; padding: 20px; height: 100%; box-sizing: border-box; z-index: 1; position: relative; }
-        .main-grid { display: grid; grid-template-columns: 1fr 350px; grid-template-rows: auto 1fr; gap: 20px; height: 100%; }
+        /* LOBBY */
+        #lobby { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); }
+        .card { padding: 40px; width: 350px; text-align: center; display: flex; flex-direction: column; gap: 15px; }
+        input { padding: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: white; outline: none; width: 100%; box-sizing: border-box; }
+        button { padding: 12px; border-radius: 8px; border: none; background: var(--accent); font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+        /* APP */
+        #app { display: none; height: 100%; padding: 20px; box-sizing: border-box; }
+        .grid { display: grid; grid-template-columns: 1fr 350px; grid-template-rows: auto 1fr; gap: 20px; height: 100%; max-width: 1600px; margin: 0 auto; }
         
         .controls { grid-column: 1 / -1; padding: 15px; display: flex; gap: 10px; align-items: center; }
-        .status-dot { width: 10px; height: 10px; background: red; border-radius: 50%; margin-right: 10px; box-shadow: 0 0 10px red; }
-        .status-dot.online { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
-
-        .video-area { position: relative; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .video-box { position: relative; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #yt-player, #html5-player { width: 100%; height: 100%; position: absolute; }
         #html5-player { display: none; }
-        
-        .chat-area { display: flex; flex-direction: column; overflow: hidden; }
-        .msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; font-size: 0.9rem; word-break: break-word; }
-        .msg strong { color: var(--accent); display: block; font-size: 0.75rem; }
 
-        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; grid-template-rows: auto 40vh 1fr; } }
+        .chat-box { display: flex; flex-direction: column; overflow: hidden; }
+        .msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; word-break: break-word; }
+        .msg strong { color: var(--accent); font-size: 0.75rem; display: block; }
+
+        /* NOTIFICAÇÕES (TOASTS) */
+        #toast-area { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 15px 20px; border-radius: 8px; background: rgba(0,0,0,0.8); border-left: 4px solid var(--accent); backdrop-filter: blur(5px); animation: slideIn 0.3s ease; max-width: 300px; font-size: 0.9rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .toast.error { border-left-color: var(--error); }
+        .toast.success { border-left-color: var(--success); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* MODAL DE AJUDA (CORS) */
+        #cors-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
+        #cors-modal h2 { color: var(--error); }
+        
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; grid-template-rows: auto 40vh 1fr; } }
     </style>
 </head>
 <body>
 
-    <div class="bg-animate"></div>
+    <div class="bg"></div>
+
+    <div id="toast-area"></div>
+
+    <div id="cors-modal">
+        <div class="card glass" style="max-width: 500px; width: 90%;">
+            <h2>⚠️ Problema Detectado</h2>
+            <p>Não conseguimos carregar o vídeo. Isso geralmente acontece porque a <strong>extensão de desbloqueio</strong> está desligada ou o link é inválido.</p>
+            <ol style="text-align: left; font-size: 0.9rem; padding-left: 20px;">
+                <li>Instale a extensão <strong>Allow CORS</strong>.</li>
+                <li>Clique no ícone dela (o "C") para ativar (deve ficar colorido).</li>
+                <li>Recarregue esta página.</li>
+            </ol>
+            <button onclick="window.open('https://chromewebstore.google.com/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf', '_blank')">Baixar Extensão</button>
+            <button style="background: #555; margin-top: 10px;" onclick="document.getElementById('cors-modal').style.display='none'">Já ativei, fechar aviso</button>
+        </div>
+    </div>
 
     <div id="lobby">
-        <div class="login-card glass">
+        <div class="card glass">
             <h1>🍿 CineSync</h1>
-            <p style="color:#aaa; font-size: 0.9em;">Se não tiver sala, invente um nome.</p>
-            <input type="text" id="usernameInput" placeholder="Seu Apelido">
-            <input type="text" id="roomInput" placeholder="Nome da Sala (Ex: sala1)">
-            <button onclick="enterRoom()">Entrar na Sala</button>
+            <input type="text" id="userInput" placeholder="Seu Nome">
+            <input type="text" id="roomInput" placeholder="Nome da Sala">
+            <button onclick="enterRoom()">Entrar</button>
         </div>
     </div>
 
     <div id="app">
-        <div class="main-grid">
+        <div class="grid">
             <div class="controls glass">
-                <div id="statusIndicator" class="status-dot"></div>
-                <input type="text" id="mediaUrl" placeholder="Link do YouTube ou .mp4">
+                <input type="text" id="mediaUrl" placeholder="Link (YouTube, .m3u8, .mp4)">
                 <button onclick="loadMedia()">▶ Play</button>
-                <button onclick="copyLink()">🔗</button>
+                <button onclick="shareLink()" style="background:#444">🔗</button>
             </div>
-            <div class="video-area glass">
+            <div class="video-box glass">
                 <div id="yt-player"></div>
                 <video id="html5-player" controls playsinline></video>
             </div>
-            <div class="chat-area glass">
-                <div style="padding:15px; border-bottom:1px solid #555; font-weight:bold;">Chat</div>
+            <div class="chat-box glass">
+                <div style="padding:15px; border-bottom:1px solid #333;">Bate-Papo</div>
                 <div class="msgs" id="chatList"></div>
-                <div style="padding:15px; display:flex; gap:5px;">
-                    <input id="msgInput" placeholder="..." onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()">➤</button>
+                <div style="padding:15px; display:flex; gap:5px; border-top:1px solid #333;">
+                    <input id="msgInput" placeholder="Digite..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" style="width: 50px;">➤</button>
                 </div>
             </div>
         </div>
@@ -98,218 +118,204 @@
             messagingSenderId: "345032163360",
             appId: "1:345032163360:web:7be1fca9c58250c2bf3c45"
         };
-
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let roomRef, chatRef, currentUser, ytPlayer, hls;
+        let roomRef, chatRef, user, ytPlayer, hls;
         let html5Player = document.getElementById('html5-player');
         let currentMode = 'youtube';
-        let isRemoteUpdate = false;
-        
-        // VARIÁVEIS DE CONTROLE DE ESTADO (A CORREÇÃO ESTÁ AQUI)
-        let isPlayerReady = false; 
-        let pendingVideoId = null; 
+        let isRemote = false, isReady = false, pendingVid = null;
+
+        // --- SISTEMA DE NOTIFICAÇÃO (TOAST) ---
+        function notify(msg, type = 'info') {
+            const area = document.getElementById('toast-area');
+            const div = document.createElement('div');
+            div.className = `toast ${type}`;
+            div.innerText = msg;
+            area.appendChild(div);
+            // Som de notificação sutil
+            // new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3').play().catch(()=>{});
+            setTimeout(() => div.remove(), 5000);
+        }
 
         // --- ENTRADA ---
         window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            if(params.has('room')) document.getElementById('roomInput').value = params.get('room');
+            const p = new URLSearchParams(window.location.search);
+            if(p.has('room')) document.getElementById('roomInput').value = p.get('room');
+            checkExtensionStatus(); // Tenta detectar problema logo no início
         };
 
         function enterRoom() {
-            currentUser = document.getElementById('usernameInput').value || 'Visitante';
+            user = document.getElementById('userInput').value || 'Anônimo';
             const room = document.getElementById('roomInput').value || 'geral';
             
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             
-            // Atualiza URL
-            const newUrl = window.location.pathname + '?room=' + room;
-            window.history.pushState({path: newUrl}, '', newUrl);
+            const url = window.location.pathname + '?room=' + room;
+            window.history.pushState({path: url}, '', url);
 
-            // Conecta Banco
             roomRef = db.ref(`rooms/${room}/video`);
             chatRef = db.ref(`rooms/${room}/chat`);
-            
-            // Marca Online
-            document.getElementById('statusIndicator').classList.add('online');
 
+            notify(`Conectado à sala: ${room}`, 'success');
             setupSync();
             setupChat();
         }
 
-        // --- EXTRATOR DE ID ---
-        function getYouTubeID(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
-
+        // --- VÍDEO ---
         function loadMedia() {
-            const url = document.getElementById('mediaUrl').value;
+            const url = document.getElementById('mediaUrl').value.trim();
+            if(!url) return notify("Cole um link primeiro!", "error");
+
             let type = 'mp4';
             let src = url;
 
             if (url.includes('youtu')) {
                 type = 'youtube';
-                const id = getYouTubeID(url);
-                if (id) src = id;
-                else return alert("Link inválido");
+                // Regex super poderosa para pegar ID
+                const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
+                if (match && match[2].length === 11) src = match[2];
+                else return notify("Link do YouTube inválido", "error");
             } else if (url.includes('.m3u8')) {
                 type = 'hls';
             }
 
-            // Envia para o Firebase (Todos recebem isso)
-            roomRef.update({ src: src, type: type, status: 'playing', timestamp: 0, updatedAt: Date.now() });
+            roomRef.update({ src, type, status: 'playing', timestamp: 0, updatedAt: Date.now() })
+                .catch(e => notify("Erro ao enviar comando: " + e.message, "error"));
         }
 
-        // --- SINCRONIA ---
         function setupSync() {
-            roomRef.on('value', (snapshot) => {
-                const data = snapshot.val();
+            roomRef.on('value', snap => {
+                const data = snap.val();
                 if(!data) return;
-                isRemoteUpdate = true;
+                isRemote = true;
 
-                // Tenta tocar a mídia
-                if (data.type === 'youtube') {
-                    playYouTubeSafe(data.src);
-                } else {
-                    playHtml5Safe(data.type, data.src);
-                }
-                
-                // Sincroniza tempo e pause/play
-                setTimeout(() => { syncPlayer(data); isRemoteUpdate = false; }, 500);
+                if(data.type === 'youtube') playYT(data.src);
+                else playHTML5(data.type, data.src);
+
+                setTimeout(() => { sync(data); isRemote = false; }, 500);
             });
         }
 
-        // --- FUNÇÃO SEGURA PARA YOUTUBE (A MÁGICA) ---
-        function playYouTubeSafe(videoId) {
+        function playYT(id) {
             currentMode = 'youtube';
-            document.getElementById('yt-player').style.display = 'block';
             html5Player.style.display = 'none';
             html5Player.pause();
-
-            // Se o player existe e está pronto
-            if (ytPlayer && isPlayerReady && ytPlayer.loadVideoById) {
-                // Só recarrega se for um vídeo diferente
-                if(ytPlayer.getVideoData && ytPlayer.getVideoData().video_id !== videoId) {
-                    ytPlayer.loadVideoById(videoId);
-                }
+            document.getElementById('yt-player').style.display = 'block';
+            
+            if(ytPlayer && isReady && ytPlayer.loadVideoById) {
+                if(ytPlayer.getVideoData().video_id !== id) ytPlayer.loadVideoById(id);
             } else {
-                // SE O PLAYER NÃO EXISTE AINDA, GUARDA NA FILA
-                console.log("Player ainda não pronto. Guardando ID:", videoId);
-                pendingVideoId = videoId;
+                pendingVid = id;
             }
         }
 
-        function playHtml5Safe(type, src) {
+        function playHTML5(type, src) {
             currentMode = type;
             document.getElementById('yt-player').style.display = 'none';
             if(ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
-            
             html5Player.style.display = 'block';
+
+            if(type === 'hls' && Hls.isSupported()) {
+                if(hls) hls.destroy();
+                hls = new Hls();
+                hls.loadSource(src);
+                hls.attachMedia(html5Player);
+                hls.on(Hls.Events.ERROR, (e, data) => {
+                    if(data.fatal) {
+                        notify("Erro ao carregar vídeo. Verifique a Extensão!", "error");
+                        document.getElementById('cors-modal').style.display = 'flex';
+                    }
+                });
+            } else {
+                html5Player.src = src;
+                html5Player.onerror = () => notify("Erro: Não foi possível carregar este arquivo MP4.", "error");
+            }
+            html5Player.play().catch(() => notify("Clique na tela para liberar o áudio", "info"));
+        }
+
+        function sync(data) {
+            const p = currentMode === 'youtube' ? ytPlayer : html5Player;
+            if(!p) return;
+            if(currentMode === 'youtube' && !isReady) return;
+
+            const time = currentMode === 'youtube' ? p.getCurrentTime() : p.currentTime;
             
-            if(html5Player.getAttribute('data-src') !== src) {
-                if (type === 'hls' && Hls.isSupported()) {
-                    if(hls) hls.destroy();
-                    hls = new Hls();
-                    hls.loadSource(src);
-                    hls.attachMedia(html5Player);
-                } else {
-                    html5Player.src = src;
-                }
-                html5Player.setAttribute('data-src', src); // Evita reload loop
-                html5Player.play().catch(e => console.log("Autoplay bloqueado"));
+            if(Math.abs(time - data.timestamp) > 2) {
+                notify("Sincronizando...", "info");
+                if(currentMode === 'youtube') p.seekTo(data.timestamp);
+                else p.currentTime = data.timestamp;
+            }
+
+            if(data.status === 'playing') {
+                if(currentMode === 'youtube' && p.getPlayerState() !== 1) p.playVideo();
+                else if(currentMode !== 'youtube' && p.paused) p.play().catch(()=>{});
+            } else {
+                if(currentMode === 'youtube' && p.getPlayerState() !== 2) p.pauseVideo();
+                else if(currentMode !== 'youtube' && !p.paused) p.pause();
             }
         }
 
-        // --- INICIALIZAÇÃO DO YOUTUBE ---
+        function sendUpd(status, time) {
+            if(isRemote) return;
+            roomRef.update({ status, timestamp: time, updatedAt: Date.now() });
+        }
+
+        // --- YOUTUBE SETUP ---
         function onYouTubeIframeAPIReady() {
             ytPlayer = new YT.Player('yt-player', {
-                height: '100%', width: '100%',
-                videoId: '', 
-                playerVars: {
-                    'autoplay': 1,
-                    'controls': 1,
-                    'mute': 1, // Essencial para começar sozinho
-                    'origin': window.location.origin
-                },
+                height: '100%', width: '100%', videoId: '',
+                playerVars: { 'autoplay': 1, 'controls': 1, 'mute': 1, 'origin': window.location.origin },
                 events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
+                    'onReady': () => { isReady = true; if(pendingVid) { ytPlayer.loadVideoById(pendingVid); pendingVid = null; } },
+                    'onStateChange': e => {
+                        if(e.data === 1) sendUpd('playing', ytPlayer.getCurrentTime());
+                        if(e.data === 2) sendUpd('paused', ytPlayer.getCurrentTime());
+                    },
+                    'onError': (e) => notify(`Erro YouTube cód: ${e.data}`, "error")
                 }
             });
         }
 
-        function onPlayerReady(event) {
-            console.log("Player YouTube Pronto!");
-            isPlayerReady = true;
-
-            // Se tinha algo na fila de espera, toca agora!
-            if (pendingVideoId) {
-                console.log("Carregando vídeo pendente:", pendingVideoId);
-                ytPlayer.loadVideoById(pendingVideoId);
-                pendingVideoId = null; // Limpa a fila
-            }
-        }
-
-        function onPlayerStateChange(e) {
-            if (e.data === 1) sendVideoUpdate('playing', ytPlayer.getCurrentTime());
-            if (e.data === 2) sendVideoUpdate('paused', ytPlayer.getCurrentTime());
-        }
-
-        function syncPlayer(data) {
-            const player = currentMode === 'youtube' ? ytPlayer : html5Player;
-            if (!player) return;
-
-            // Se YouTube não estiver pronto, aborta sync
-            if (currentMode === 'youtube' && !isPlayerReady) return;
-
-            const currentTime = currentMode === 'youtube' ? player.getCurrentTime() : player.currentTime;
-            
-            // Pula se a diferença for maior que 2s
-            if (Math.abs(currentTime - data.timestamp) > 2) {
-                if (currentMode === 'youtube') player.seekTo(data.timestamp);
-                else player.currentTime = data.timestamp;
-            }
-
-            // Play/Pause
-            if (data.status === 'playing') {
-                if (currentMode === 'youtube' && player.getPlayerState() !== 1) player.playVideo();
-                else if (currentMode !== 'youtube' && player.paused) player.play().catch(()=>{});
-            } else {
-                if (currentMode === 'youtube' && player.getPlayerState() !== 2) player.pauseVideo();
-                else if (currentMode !== 'youtube' && !player.paused) player.pause();
-            }
-        }
-
-        function sendVideoUpdate(status, time) {
-            if(isRemoteUpdate) return;
-            roomRef.update({ status, timestamp: time, updatedAt: Date.now() });
-        }
+        html5Player.onplay = () => sendUpd('playing', html5Player.currentTime);
+        html5Player.onpause = () => sendUpd('paused', html5Player.currentTime);
 
         // --- CHAT ---
         function setupChat() {
-            chatRef.on('child_added', (s) => {
-                const msg = s.val();
-                const d = document.createElement('div');
-                d.className = 'msg';
-                d.innerHTML = `<strong>${msg.user}</strong>${msg.text}`;
-                const list = document.getElementById('chatList');
-                list.appendChild(d);
-                list.scrollTop = list.scrollHeight;
+            chatRef.on('child_added', snap => {
+                const msg = snap.val();
+                const div = document.createElement('div');
+                div.className = 'msg';
+                div.innerHTML = `<strong>${msg.user}</strong>${msg.text}`;
+                document.getElementById('chatList').appendChild(div);
+                document.getElementById('chatList').scrollTop = 99999;
             });
         }
         function sendMsg() {
             const i = document.getElementById('msgInput');
-            if(i.value) chatRef.push({ user: currentUser, text: i.value });
+            if(i.value) chatRef.push({ user, text: i.value });
             i.value = '';
         }
-        function copyLink() { navigator.clipboard.writeText(window.location.href); alert('Link Copiado!'); }
-        
-        html5Player.onplay = () => sendVideoUpdate('playing', html5Player.currentTime);
-        html5Player.onpause = () => sendVideoUpdate('paused', html5Player.currentTime);
+
+        // --- DETECTOR DE EXTENSÃO (SIMULAÇÃO) ---
+        function checkExtensionStatus() {
+            // Tenta acessar um arquivo que sabemos que precisa de CORS
+            // Se falhar, é um forte indício de que a extensão está desligada
+            fetch('https://google.com', { method: 'HEAD', mode: 'cors' })
+                .then(() => console.log("CORS parece liberado"))
+                .catch(() => {
+                    // Nota: Isso é apenas um 'chute', pois o google bloqueia mesmo. 
+                    // Mas se o usuário tentar rodar o vídeo e der erro HLS fatal,
+                    // o modal vai abrir automaticamente (veja a função playHTML5).
+                    console.log("Verificação inicial de rede");
+                });
+        }
+
+        function shareLink() {
+            navigator.clipboard.writeText(window.location.href);
+            notify("Link copiado! Envie para seus amigos.", "success");
+        }
     </script>
 </body>
 </html>
