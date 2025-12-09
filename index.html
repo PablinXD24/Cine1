@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineSync - Pro</title>
+    <title>CineSync - Final Pro</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -49,7 +49,7 @@
         .toast.success { border-left-color: var(--success); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* MODAL DE AJUDA (CORS) */
+        /* MODAL DE AJUDA (ATUALIZADO PARA QUALQUER EXTENSÃO CORS) */
         #cors-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
         #cors-modal h2 { color: var(--error); }
         
@@ -64,14 +64,15 @@
 
     <div id="cors-modal">
         <div class="card glass" style="max-width: 500px; width: 90%;">
-            <h2>⚠️ Problema Detectado</h2>
-            <p>Não conseguimos carregar o vídeo. Isso geralmente acontece porque a <strong>extensão de desbloqueio</strong> está desligada ou o link é inválido.</p>
-            <ol style="text-align: left; font-size: 0.9rem; padding-left: 20px;">
-                <li>Instale a extensão <strong>Allow CORS</strong>.</li>
-                <li>Clique no ícone dela (o "C") para ativar (deve ficar colorido).</li>
+            <h2>⚠️ Vídeo Bloqueado</h2>
+            <p>O site do filme bloqueou o acesso. Para assistir, você e seus amigos precisam de uma extensão "CORS Unblock".</p>
+            <ol style="text-align: left; font-size: 0.9rem; padding-left: 20px; color: #ccc;">
+                <li>Clique abaixo para buscar uma extensão CORS.</li>
+                <li>Instale uma (ex: <strong>CORS Unblock</strong>).</li>
+                <li><strong>Ative a extensão</strong> (ícone colorido no navegador).</li>
                 <li>Recarregue esta página.</li>
             </ol>
-            <button onclick="window.open('https://chromewebstore.google.com/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf', '_blank')">Baixar Extensão</button>
+            <button onclick="window.open('https://chromewebstore.google.com/search/CORS%20Unblock', '_blank')">Baixar Extensão (Busca)</button>
             <button style="background: #555; margin-top: 10px;" onclick="document.getElementById('cors-modal').style.display='none'">Já ativei, fechar aviso</button>
         </div>
     </div>
@@ -90,7 +91,7 @@
             <div class="controls glass">
                 <input type="text" id="mediaUrl" placeholder="Link (YouTube, .m3u8, .mp4)">
                 <button onclick="loadMedia()">▶ Play</button>
-                <button onclick="shareLink()" style="background:#444">🔗</button>
+                <button onclick="shareLink()" style="background:#444">🔗 Copiar</button>
             </div>
             <div class="video-box glass">
                 <div id="yt-player"></div>
@@ -133,8 +134,6 @@
             div.className = `toast ${type}`;
             div.innerText = msg;
             area.appendChild(div);
-            // Som de notificação sutil
-            // new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3').play().catch(()=>{});
             setTimeout(() => div.remove(), 5000);
         }
 
@@ -142,7 +141,9 @@
         window.onload = () => {
             const p = new URLSearchParams(window.location.search);
             if(p.has('room')) document.getElementById('roomInput').value = p.get('room');
-            checkExtensionStatus(); // Tenta detectar problema logo no início
+            
+            // Check simples de conexão
+            fetch('https://google.com', {method:'HEAD', mode:'no-cors'}).catch(() => notify("Sem internet?", "error"));
         };
 
         function enterRoom() {
@@ -158,7 +159,7 @@
             roomRef = db.ref(`rooms/${room}/video`);
             chatRef = db.ref(`rooms/${room}/chat`);
 
-            notify(`Conectado à sala: ${room}`, 'success');
+            notify(`Sala: ${room}`, 'success');
             setupSync();
             setupChat();
         }
@@ -173,7 +174,6 @@
 
             if (url.includes('youtu')) {
                 type = 'youtube';
-                // Regex super poderosa para pegar ID
                 const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
                 if (match && match[2].length === 11) src = match[2];
                 else return notify("Link do YouTube inválido", "error");
@@ -182,7 +182,7 @@
             }
 
             roomRef.update({ src, type, status: 'playing', timestamp: 0, updatedAt: Date.now() })
-                .catch(e => notify("Erro ao enviar comando: " + e.message, "error"));
+                .catch(e => notify("Erro Firebase: " + e.message, "error"));
         }
 
         function setupSync() {
@@ -222,17 +222,24 @@
                 hls = new Hls();
                 hls.loadSource(src);
                 hls.attachMedia(html5Player);
+                
+                // --- AQUI ESTÁ A MÁGICA DO ALERTA ---
                 hls.on(Hls.Events.ERROR, (e, data) => {
                     if(data.fatal) {
-                        notify("Erro ao carregar vídeo. Verifique a Extensão!", "error");
+                        console.error("Erro Fatal HLS:", data);
+                        notify("Erro de Bloqueio. Verifique a extensão!", "error");
+                        // Abre o modal automaticamente se der erro de carregamento
                         document.getElementById('cors-modal').style.display = 'flex';
                     }
                 });
             } else {
                 html5Player.src = src;
-                html5Player.onerror = () => notify("Erro: Não foi possível carregar este arquivo MP4.", "error");
+                html5Player.onerror = () => {
+                    notify("Erro ao carregar MP4. Bloqueio CORS provável.", "error");
+                    document.getElementById('cors-modal').style.display = 'flex';
+                };
             }
-            html5Player.play().catch(() => notify("Clique na tela para liberar o áudio", "info"));
+            html5Player.play().catch(() => notify("Clique na tela para liberar o som", "info"));
         }
 
         function sync(data) {
@@ -243,7 +250,6 @@
             const time = currentMode === 'youtube' ? p.getCurrentTime() : p.currentTime;
             
             if(Math.abs(time - data.timestamp) > 2) {
-                notify("Sincronizando...", "info");
                 if(currentMode === 'youtube') p.seekTo(data.timestamp);
                 else p.currentTime = data.timestamp;
             }
@@ -277,7 +283,6 @@
                 }
             });
         }
-
         html5Player.onplay = () => sendUpd('playing', html5Player.currentTime);
         html5Player.onpause = () => sendUpd('paused', html5Player.currentTime);
 
@@ -297,24 +302,9 @@
             if(i.value) chatRef.push({ user, text: i.value });
             i.value = '';
         }
-
-        // --- DETECTOR DE EXTENSÃO (SIMULAÇÃO) ---
-        function checkExtensionStatus() {
-            // Tenta acessar um arquivo que sabemos que precisa de CORS
-            // Se falhar, é um forte indício de que a extensão está desligada
-            fetch('https://google.com', { method: 'HEAD', mode: 'cors' })
-                .then(() => console.log("CORS parece liberado"))
-                .catch(() => {
-                    // Nota: Isso é apenas um 'chute', pois o google bloqueia mesmo. 
-                    // Mas se o usuário tentar rodar o vídeo e der erro HLS fatal,
-                    // o modal vai abrir automaticamente (veja a função playHTML5).
-                    console.log("Verificação inicial de rede");
-                });
-        }
-
         function shareLink() {
             navigator.clipboard.writeText(window.location.href);
-            notify("Link copiado! Envie para seus amigos.", "success");
+            notify("Link copiado!", "success");
         }
     </script>
 </body>
