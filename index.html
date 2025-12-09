@@ -209,29 +209,40 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let roomRef, user, peer, myStream;
+let roomRef, user, peer;
 let isHost = false;
-let currentSrc = ''; // Guarda o link atual para não recarregar à toa
+let currentSrc = '';
+let lastUpdate = 0; // Para evitar loop de comandos
 
 // Elementos
+const html5Player = document.getElementById('html5-player');
+const ytDiv = document.getElementById('yt-player');
 const streamPlayer = document.getElementById('stream-player');
 const hostPreview = document.getElementById('host-preview');
-const broadcastBtn = document.getElementById('broadcastBtn');
 const unlockBtn = document.getElementById('unlock-btn');
-const ytDiv = document.getElementById('yt-player');
-const html5Player = document.getElementById('html5-player');
+const broadcastBtn = document.getElementById('broadcastBtn');
 
+// --- SISTEMA DE NOTIFICAÇÃO ---
 function notify(msg, type='info') {
     const d = document.createElement('div');
     d.className = `toast`; d.innerText = msg;
-    if(type==='error') d.style.borderLeft = '4px solid var(--error)';
+    if(type==='error') {
+        d.style.borderLeft = '4px solid var(--error)';
+        d.style.background = 'rgba(50, 0, 0, 0.9)';
+    } else if (type==='success') {
+        d.style.borderLeft = '4px solid var(--success)';
+    }
     document.getElementById('toast-area').appendChild(d);
     setTimeout(() => d.remove(), 4000);
 }
 
+// --- ENTRADA NA SALA ---
 function enterRoom() {
     user = document.getElementById('userInput').value || 'Visitante';
-    const room = document.getElementById('roomInput').value || 'geral';
+    let roomInput = document.getElementById('roomInput').value || 'geral';
+    
+    // CORREÇÃO 1: Padronizar nome da sala (Tudo minúsculo e sem espaços)
+    const room = roomInput.trim().toLowerCase();
     
     document.getElementById('lobby').style.display = 'none';
     document.getElementById('app').style.display = 'block';
@@ -241,57 +252,66 @@ function enterRoom() {
 
     roomRef = db.ref(`rooms/${room}`);
     
-    // Inicia a escuta da sincronia IMEDIATAMENTE
-    setupSync();
-    setupChat();
-    setupWebRTC(); // Inicia P2P (apenas para quem for usar tela compartilhada)
+    notify(`Entrando na sala: ${room}...`, "success");
+
+    // Inicia ouvintes
+    setupSync();     // Sincronia de Link
+    setupChat();     // Chat
+    setupWebRTC();   // P2P (Opcional)
 }
 
-// --- 2. SISTEMA DE SINCRONIA UNIVERSAL (O SEGREDO) ---
-
-// Função chamada quando ALGUÉM clica em Play
+// --- 2. COMANDO DE PLAY (QUANDO VOCÊ COLA O LINK) ---
 function loadMedia() {
     const url = document.getElementById('mediaUrl').value.trim();
-    if(!url) return notify("Cole um link primeiro.");
+    if(!url) return notify("Cole um link!", "error");
 
-    // ENVIA O COMANDO PARA TODOS (Inclusive para mim mesmo)
-    // Não carregamos o vídeo aqui. Esperamos o Firebase nos avisar.
+    // Identifica tipo
+    let type = 'html5';
+    if (url.includes('youtu')) type = 'youtube';
+
+    notify("Enviando filme para todos...", "info");
+
+    // Envia para o Firebase (Todos os APKs vão ler isso)
     roomRef.update({
-        type: url.includes('youtu') ? 'youtube' : 'html5',
+        type: type,
         src: url,
         status: 'playing',
         timestamp: 0,
         updatedAt: firebase.database.ServerValue.TIMESTAMP
     });
-    
-    notify("Enviando comando para a sala...");
 }
 
+// --- 3. SINCRONIA (RECEBER O FILME) ---
 function setupSync() {
     roomRef.on('value', snap => {
         const data = snap.val();
         if(!data || !data.src) return;
 
-        // Se for transmissão de tela (WebRTC), ignoramos o player normal
+        // Se houver transmissão de tela ativa, prioriza ela
         if (data.broadcast && data.broadcast.isLive) return;
 
-        // LÓGICA DE CARREGAMENTO INTELIGENTE
-        // Só recarrega o vídeo se o link mudou
+        // 1. Carrega o vídeo se mudou
         if (data.src !== currentSrc) {
+            console.log("Novo link recebido:", data.src);
+            notify("Recebi novo filme! Carregando...");
             currentSrc = data.src;
             playContent(data.type, data.src);
         }
 
-        // SINCRONIA DE TEMPO E PAUSE
+        // 2. Sincroniza Play/Pause/Tempo
         syncPlayer(data);
     });
 }
 
 function playContent(type, src) {
-    // Esconde transmissão e mostra player normal
+    // Limpa players anteriores
     hostPreview.style.display = 'none';
     streamPlayer.style.display = 'none';
     
+    // Mostra botão de desbloqueio por segurança
+    unlockBtn.style.display = 'block';
+    unlockBtn.innerText = "🔄 Sincronizar / Ativar Som";
+
     if (type === 'youtube') {
         html5Player.style.display = 'none';
         ytDiv.style.display = 'block';
@@ -312,20 +332,28 @@ function playContent(type, src) {
             html5Player.src = src;
         }
         
-        // Tenta dar play (APK precisa disso)
-        html5Player.play().catch(() => unlockBtn.style.display = 'block');
+        // CORREÇÃO 2: Tenta dar play MUDO primeiro (APK aceita melhor)
+        html5Player.muted = true;
+        html5Player.play().then(() => {
+            notify("Vídeo pronto. Toque em 'Ativar Som'.");
+        }).catch(e => {
+            notify("Toque no botão para iniciar o vídeo!");
+        });
     }
 }
 
 function syncPlayer(data) {
-    // Apenas HTML5 por enquanto para simplificar
+    // Lógica para HTML5 (APK usa isso)
     if (html5Player.style.display !== 'none') {
-        // Se a diferença de tempo for grande (> 2s), pula para o tempo certo
-        if (Math.abs(html5Player.currentTime - data.timestamp) > 2) {
+        
+        // Sincronia de Tempo (Só pula se a diferença for > 3 segundos)
+        // Isso evita "pulos" constantes com internet lenta
+        if (Math.abs(html5Player.currentTime - data.timestamp) > 3) {
+            console.log("Sincronizando tempo...");
             html5Player.currentTime = data.timestamp;
         }
         
-        // Play/Pause
+        // Sincronia de Estado
         if (data.status === 'playing' && html5Player.paused) {
             html5Player.play().catch(()=>{});
         } else if (data.status === 'paused' && !html5Player.paused) {
@@ -334,21 +362,42 @@ function syncPlayer(data) {
     }
 }
 
-// Eventos do Player (Para eu controlar a sala)
+// Botão de Emergência (Unlock / Force Sync)
+function unlockAudio() {
+    html5Player.muted = false;
+    
+    // Força o play
+    if (html5Player.style.display !== 'none') {
+        html5Player.play();
+        // Força uma atualização do servidor
+        roomRef.once('value').then(snap => {
+            const data = snap.val();
+            if(data) syncPlayer(data);
+        });
+    } else {
+        streamPlayer.muted = false;
+        streamPlayer.play();
+    }
+    
+    unlockBtn.style.display = 'none';
+    notify("Áudio ativado e sincronizado!", "success");
+}
+
+// --- 4. ENVIO DE ESTADO (QUEM DÁ PLAY CONTROLA) ---
 html5Player.onplay = () => updateServer('playing');
 html5Player.onpause = () => updateServer('paused');
-// Pequeno delay para não flodar o servidor
-let lastUpdate = 0;
 html5Player.ontimeupdate = () => {
-    if (Date.now() - lastUpdate > 2000) { // A cada 2 segundos
-        if (!html5Player.paused) updateServer('playing');
+    // Envia atualização a cada 2s se estiver tocando
+    if (!html5Player.paused && Date.now() - lastUpdate > 2000) {
+        updateServer('playing');
         lastUpdate = Date.now();
     }
 };
 
 function updateServer(status) {
-    // Só envia se eu tiver carregado algo
-    if (!currentSrc) return;
+    // Só envia se eu realmente tiver carregado um link
+    if (!currentSrc) return; 
+    
     roomRef.update({
         status: status,
         timestamp: html5Player.currentTime,
@@ -356,7 +405,7 @@ function updateServer(status) {
     });
 }
 
-// --- 3. EXTRAS: YOUTUBE & CHAT ---
+// --- 5. EXTRAS: WEBRTC E CHAT ---
 
 function onYouTubeIframeAPIReady() {
     window.ytPlayer = new YT.Player('yt-player', {
@@ -364,12 +413,56 @@ function onYouTubeIframeAPIReady() {
         playerVars: { 'autoplay': 1, 'controls': 1 },
         events: {
             'onStateChange': (e) => {
-                // Sincronia YT básica
                 if(e.data === 1) updateServer('playing'); 
                 if(e.data === 2) updateServer('paused');
             }
         }
     });
+}
+
+function setupWebRTC() {
+    peer = new Peer(undefined, { config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} });
+    
+    peer.on('open', id => {
+        roomRef.child('broadcast').on('value', snap => {
+            const data = snap.val();
+            if (data && data.isLive && data.hostPeerId !== peer.id) {
+                notify(`Recebendo transmissão de ${data.hostName}`);
+                peer.connect(data.hostPeerId);
+                // Prepara visual
+                html5Player.style.display = 'none';
+                ytDiv.style.display = 'none';
+                streamPlayer.style.display = 'block';
+                unlockBtn.style.display = 'block';
+                unlockBtn.innerText = "🔊 Ativar Som da Live";
+            }
+        });
+    });
+
+    peer.on('call', call => {
+        call.answer(null);
+        call.on('stream', stream => {
+            streamPlayer.srcObject = stream;
+            streamPlayer.muted = true; // Começa mudo
+            streamPlayer.play().catch(() => unlockBtn.style.display = 'block');
+        });
+    });
+}
+
+// Host Logic (PC)
+async function startBroadcast() {
+    try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({video:{cursor:"always"}, audio:true});
+        isHost = true;
+        hostPreview.srcObject = stream;
+        hostPreview.style.display = 'block';
+        roomRef.child('broadcast').set({ hostPeerId: peer.id, isLive: true, hostName: user });
+        peer.on('connection', conn => { peer.call(conn.peer, stream); });
+        stream.getVideoTracks()[0].onended = () => {
+            roomRef.child('broadcast').set({ isLive: false });
+            hostPreview.style.display = 'none'; isHost = false;
+        };
+    } catch (e) { notify("Erro: Recurso indisponível."); }
 }
 
 function setupChat() {
@@ -387,53 +480,7 @@ function sendMsg() {
     if(i.value) roomRef.child('chat').push({ user, text: i.value });
     i.value = '';
 }
-function shareLink() { navigator.clipboard.writeText(window.location.href); notify("Link copiado!"); }
-function unlockAudio() { html5Player.play(); unlockBtn.style.display = 'none'; }
-
-// --- 4. WEBRTC (TRANSMISSÃO DE TELA) ---
-// Mantido para caso usem no PC, mas não interfere no APK se não usado
-function setupWebRTC() {
-    peer = new Peer(undefined, { config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} });
-    
-    peer.on('open', id => {
-        roomRef.child('broadcast').on('value', snap => {
-            const data = snap.val();
-            if (data && data.isLive && data.hostPeerId !== peer.id) {
-                notify(`Recebendo transmissão de ${data.hostName}`);
-                peer.connect(data.hostPeerId);
-                // Esconde players locais
-                html5Player.style.display = 'none';
-                ytDiv.style.display = 'none';
-                streamPlayer.style.display = 'block';
-            }
-        });
-    });
-
-    peer.on('call', call => {
-        call.answer(null);
-        call.on('stream', stream => {
-            streamPlayer.srcObject = stream;
-            streamPlayer.play().catch(() => unlockBtn.style.display = 'block');
-        });
-    });
-}
-
-// Funções de Host (Só funcionam no PC)
-async function startBroadcast() {
-    try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({video:{cursor:"always"}, audio:true});
-        isHost = true;
-        hostPreview.srcObject = stream;
-        hostPreview.style.display = 'block';
-        roomRef.child('broadcast').set({ hostPeerId: peer.id, isLive: true, hostName: user });
-        
-        peer.on('connection', conn => { peer.call(conn.peer, stream); });
-        stream.getVideoTracks()[0].onended = () => {
-            roomRef.child('broadcast').set({ isLive: false });
-            hostPreview.style.display = 'none';
-            isHost = false;
-        };
-    } catch (e) { notify("Erro: Recurso indisponível no celular."); }
-}    </script>
+function shareLink() { navigator.clipboard.writeText(window.location.href); notify("Link copiado!", "success"); }    
+    </script>
 </body>
 </html>
