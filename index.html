@@ -2,9 +2,9 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>CineSync Web</title>
+    <title>CineSync Liquid Pro</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -14,21 +14,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- ESTÉTICA LIQUID GLASS & RESPONSIVIDADE --- */
+        /* --- 1. ESTÉTICA LIQUID GLASS (A ORIGINAL) --- */
         :root {
             --bg-dark: #000000;
             --text: #ffffff;
-            --text-dim: rgba(255, 255, 255, 0.7);
-            --accent: #0A84FF;
-            --accent-glow: rgba(10, 132, 255, 0.5);
-            --glass-bg: rgba(30, 30, 30, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --radius: 20px;
-            --error: #FF453A;
-            --success: #30D158;
+            --text-dim: rgba(255, 255, 255, 0.75);
+            --accent: #00E5FF; /* Ciano Neon */
+            --accent-hover: #00AAFF;
+            --accent-glow: rgba(0, 229, 255, 0.4);
+            
+            /* Vidro Complexo */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-shine: rgba(255, 255, 255, 0.1);
+            --radius: 24px;
+            
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             margin: 0; font-family: 'Inter', sans-serif;
@@ -37,165 +42,176 @@
             display: flex; flex-direction: column;
         }
 
-        /* Fundo Aurora Animado */
-        .bg {
+        /* Fundo Aurora Vibrante */
+        .bg-liquid {
             position: fixed; inset: 0; z-index: -2;
             background: radial-gradient(circle at 10% 20%, #2E1065, transparent 50%),
                         radial-gradient(circle at 90% 80%, #0C4A6E, transparent 50%),
                         radial-gradient(circle at 50% 50%, #000000, #111);
             background-size: 150% 150%;
+            animation: pulseBg 10s infinite alternate;
         }
-        .bg::after {
-            content: ''; position: absolute; inset: 0;
-            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0MDAnIGhlaWdodD0nNDAwJz48ZmlsdGVyIGlkPSdhJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nLjYnIG51bU9jdGF2ZXM9JzMnIHN0aXRjaFRpbGVzPSdzdGl0Y2gnLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWx0ZXI9J3VybCgjYSknIG9wYWNpdHk9JzAuMDUnLz48L3N2Zz4=');
-            opacity: 0.25; mix-blend-mode: overlay; pointer-events: none;
+        .bg-liquid::before {
+            content: ''; position: absolute; top: -20%; left: -10%; width: 60vw; height: 60vw;
+            background: radial-gradient(circle, #00E5FF 0%, transparent 70%);
+            filter: blur(80px); opacity: 0.3; animation: float 20s infinite alternate;
         }
+        .bg-liquid::after {
+            content: ''; position: absolute; bottom: -20%; right: -10%; width: 50vw; height: 50vw;
+            background: radial-gradient(circle, #7C3AED 0%, transparent 70%);
+            filter: blur(100px); opacity: 0.3; animation: float 25s infinite alternate-reverse;
+        }
+        @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(50px, 30px); } }
+        @keyframes pulseBg { 0% { background-size: 150% 150%; } 100% { background-size: 170% 170%; } }
 
-        /* Classe Glass Principal */
+        /* CLASSE GLASS 3D (Efeito Premium) */
         .glass {
             background: var(--glass-bg);
             backdrop-filter: blur(40px) saturate(180%);
             -webkit-backdrop-filter: blur(40px) saturate(180%);
             border: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-shine);
+            border-left: 1px solid var(--glass-shine);
             border-radius: var(--radius);
-            box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.1), 0 20px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
         }
 
-        /* --- LAYOUT PRINCIPAL --- */
+        /* --- 2. LAYOUT RESPONSIVO (MOBILE FIRST) --- */
         #app {
-            display: none; /* Ativado via JS */
+            display: none; /* Flex ativado via JS */
             flex-direction: column;
             width: 100%; height: 100%;
-            padding: 15px; gap: 15px;
+            padding: calc(15px + var(--safe-top)) 15px calc(15px + var(--safe-bottom)) 15px;
+            gap: 15px;
         }
 
-        /* VÍDEO */
+        .main-content { display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; }
+        .side-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+        /* VÍDEO (16:9 Fixo) */
         .video-section {
-            width: 100%; flex-shrink: 0;
-            border-radius: var(--radius); overflow: hidden;
-            background: #000; position: relative;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            width: 100%; overflow: hidden; padding: 0;
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.1); /* Glow sutil */
         }
-        
         .video-aspect-ratio {
-            width: 100%; aspect-ratio: 16/9; position: relative;
-            background: black; z-index: 1;
+            width: 100%; aspect-ratio: 16/9; position: relative; background: #000;
+            transform: translateZ(0); -webkit-transform: translateZ(0); z-index: 1;
         }
-
-        video, #yt-player, #stream-player, #host-preview { 
-            width: 100%; height: 100%; position: absolute; object-fit: contain; z-index: 2; 
-        }
+        video, #yt-player, #stream-player, #host-preview { width: 100%; height: 100%; position: absolute; object-fit: contain; z-index: 2; }
         #html5-player, #stream-player, #host-preview { display: none; }
 
         #unlock-btn {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100;
-            background: rgba(255, 255, 255, 0.95); color: black; border: none; padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.95); color: black; border: none; padding: 14px 28px;
             border-radius: 50px; font-weight: 700; cursor: pointer; display: none;
-            box-shadow: 0 0 30px rgba(255,255,255,0.4);
+            box-shadow: 0 0 30px var(--accent);
         }
 
-        /* CONTROLES */
-        .controls-section { padding: 12px; }
+        /* CONTROLES (Vidro + Scroll Horizontal) */
+        .controls-section { padding: 15px; }
         .controls-track {
-            display: flex; gap: 10px; align-items: center;
-            overflow-x: auto; /* Scroll se tela pequena */
+            display: flex; gap: 12px; align-items: center;
+            overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px;
         }
         .controls-track::-webkit-scrollbar { display: none; }
 
         input {
             background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
-            color: white; padding: 12px 16px; border-radius: 14px; font-size: 16px;
+            color: white; padding: 14px 18px; border-radius: 16px; font-size: 16px;
             outline: none; transition: 0.3s; flex: 1; min-width: 200px;
+            backdrop-filter: blur(10px);
         }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); background: rgba(0,0,0,0.5); }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); background: rgba(255,255,255,0.1); }
 
         button {
-            background: var(--accent); color: white; border: none;
-            padding: 0 20px; height: 48px; border-radius: 14px;
-            font-weight: 600; cursor: pointer; white-space: nowrap;
-            transition: 0.2s; box-shadow: 0 4px 15px var(--accent-glow);
-            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+            background: rgba(0, 229, 255, 0.15); color: var(--accent); border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 0 24px; height: 50px; border-radius: 16px;
+            font-weight: 700; cursor: pointer; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px;
+            transition: 0.3s; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+            backdrop-filter: blur(10px);
         }
-        button:hover { transform: scale(1.02); filter: brightness(1.1); }
-        button:active { transform: scale(0.96); }
+        button:hover { background: var(--accent); color: #000; box-shadow: 0 0 25px var(--accent); transform: translateY(-2px); }
+        button:active { transform: scale(0.95); }
 
-        .btn-live { background: var(--error); box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4); }
-        .btn-live.active { background: var(--success); animation: pulse 2s infinite; box-shadow: 0 4px 15px rgba(48, 209, 88, 0.4); }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        
-        .live-dot { width: 8px; height: 8px; background: white; border-radius: 50%; display: none; }
-        .btn-live.active .live-dot { display: block; }
+        .btn-live { border-color: #FF3B30; color: #FF3B30; background: rgba(255, 59, 48, 0.15); }
+        .btn-live:hover { background: #FF3B30; color: white; box-shadow: 0 0 25px #FF3B30; }
+        .btn-live.active { background: #30D158; color: black; border-color: #30D158; box-shadow: 0 0 25px #30D158; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        .btn-icon { background: rgba(255,255,255,0.1); width: 48px; padding: 0; justify-content: center; box-shadow: none; }
+        .btn-icon { width: 50px; padding: 0; justify-content: center; }
 
         /* CHAT */
         .chat-section {
-            flex: 1; display: flex; flex-direction: column; overflow: hidden;
-            height: 100%; min-height: 0;
+            flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100%;
         }
         .chat-header {
-            padding: 12px 15px; border-bottom: 1px solid var(--glass-border);
-            font-weight: 700; font-size: 0.8rem; letter-spacing: 1px;
-            color: var(--text-dim); text-transform: uppercase;
+            padding: 15px 20px; border-bottom: 1px solid var(--glass-border);
+            font-weight: 800; font-size: 0.85rem; letter-spacing: 1.5px;
+            color: var(--accent); text-transform: uppercase; text-shadow: 0 0 10px var(--accent-glow);
         }
         .chat-msgs {
-            flex: 1; overflow-y: auto; padding: 15px;
-            display: flex; flex-direction: column; gap: 10px;
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 12px;
         }
         .msg-bubble {
-            background: rgba(255,255,255,0.08); padding: 10px 14px;
-            border-radius: 16px; border-bottom-left-radius: 4px;
-            font-size: 0.95rem; line-height: 1.4; word-wrap: break-word;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.08); padding: 12px 16px;
+            border-radius: 18px; border-bottom-left-radius: 4px;
+            font-size: 0.95rem; line-height: 1.5; max-width: 85%;
+            border: 1px solid rgba(255,255,255,0.05); align-self: flex-start;
         }
-        .msg-bubble strong { color: var(--accent); display: block; font-size: 0.75rem; margin-bottom: 2px; }
+        .msg-bubble strong { color: var(--accent); display: block; font-size: 0.75rem; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
         .chat-input-area {
-            padding: 12px; display: flex; gap: 8px;
+            padding: 15px; display: flex; gap: 10px;
             border-top: 1px solid var(--glass-border); background: rgba(0,0,0,0.2);
         }
 
-        /* --- MEDIA QUERY: DESKTOP (PC) --- */
+        /* --- MEDIA QUERY: PC (LADO A LADO) --- */
         @media (min-width: 900px) {
             #app {
-                flex-direction: row; /* Layout Horizontal */
-                max-width: 1800px; margin: 0 auto;
-                padding: 30px; gap: 30px;
+                flex-direction: row; max-width: 1900px; margin: 0 auto;
+                padding: 40px; gap: 40px;
             }
-            /* Esquerda: Vídeo + Controles */
-            .main-content { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; }
-            /* Direita: Chat */
-            .side-content { flex: 1; display: flex; flex-direction: column; height: 100%; }
-            
+            .main-content { flex: 3; gap: 25px; }
+            .side-content { flex: 1; height: 100%; }
             .controls-track { flex-wrap: wrap; overflow: visible; }
         }
 
         /* LOBBY */
-        #lobby { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(25px); padding: 20px; }
-        .lobby-card { width: 100%; max-width: 400px; padding: 40px; text-align: center; display: flex; flex-direction: column; gap: 20px; }
+        #lobby { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(30px); }
+        .lobby-card { width: 90%; max-width: 450px; padding: 50px; text-align: center; display: flex; flex-direction: column; gap: 25px; }
         h1 { 
-            margin: 0; font-size: 3rem; font-weight: 800; letter-spacing: -2px;
+            margin: 0; font-size: 3.5rem; font-weight: 800; letter-spacing: -2px;
             background: linear-gradient(135deg, #fff, #aaa);
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent; color: transparent;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .input-stack { display: flex; flex-direction: column; gap: 10px; }
-        .btn-primary { width: 100%; justify-content: center; }
+        .highlight { color: var(--accent); -webkit-text-fill-color: var(--accent); text-shadow: 0 0 20px var(--accent); }
+        .input-stack { display: flex; flex-direction: column; gap: 15px; }
+        .btn-primary { width: 100%; justify-content: center; background: var(--accent); color: black; box-shadow: 0 0 30px var(--accent-glow); }
+        .btn-primary:hover { background: #fff; color: var(--accent); }
 
         /* TOASTS */
-        #toast-area { position: fixed; top: 30px; left: 50%; transform: translateX(-50%); z-index: 300; width: 90%; max-width: 350px; pointer-events: none; }
-        .toast { background: rgba(30,30,30,0.95); padding: 12px 20px; border-radius: 50px; color: white; text-align: center; margin-bottom: 10px; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--glass-border); animation: slideDown 0.3s ease; }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        #toast-area { position: fixed; top: 40px; right: 40px; z-index: 300; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { 
+            pointer-events: auto; padding: 16px 24px; background: rgba(20, 20, 20, 0.9); 
+            backdrop-filter: blur(20px); border-radius: 16px; border: 1px solid var(--glass-border); border-left: 4px solid var(--accent);
+            color: white; font-weight: 600; font-size: 0.9rem; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6); animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="bg"></div>
+    <div class="bg-liquid"></div>
     <div id="toast-area"></div>
 
     <div id="lobby">
         <div class="lobby-card glass">
-            <h1>CineSync</h1>
-            <p style="color:var(--text-dim)">Cinema Sincronizado</p>
+            <h1>CineSync <span class="highlight">Liquid</span></h1>
+            <p style="color:var(--text-dim); font-weight: 300;">Sincronia Premium</p>
             <div class="input-stack">
                 <input type="text" id="userInput" placeholder="Seu Apelido">
                 <input type="text" id="roomInput" placeholder="Nome da Sala">
@@ -220,7 +236,7 @@
                 <div class="controls-track">
                     <input type="text" id="mediaUrl" placeholder="Link do filme...">
                     <button onclick="loadMedia()">▶ Play</button>
-                    <button id="broadcastBtn" class="btn-live" onclick="startBroadcast()" title="Apenas PC">
+                    <button id="broadcastBtn" class="btn-live" onclick="startBroadcast()">
                         <div class="live-dot"></div> 📡 Live
                     </button>
                     <button onclick="shareLink()" class="btn-icon">🔗</button>
@@ -233,7 +249,7 @@
                 <div class="chat-header">Bate-papo</div>
                 <div class="chat-msgs" id="chatList"></div>
                 <div class="chat-input-area">
-                    <input id="msgInput" placeholder="Digite..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <input id="msgInput" placeholder="Digite aqui..." onkeypress="if(event.key==='Enter') sendMsg()">
                     <button onclick="sendMsg()" class="btn-icon">➤</button>
                 </div>
             </div>
@@ -241,7 +257,7 @@
     </div>
 
     <script>
-        // --- CONFIGURAÇÃO FIREBASE ---
+        // --- 1. CONFIGURAÇÃO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyAzUrQOJcALZmO9vyO8J52XDKL4Q49M7Rg",
             authDomain: "cine-54caf.firebaseapp.com",
@@ -259,7 +275,6 @@
         let currentSrc = '';
         let lastUpdate = 0;
 
-        // Elementos
         const html5Player = document.getElementById('html5-player');
         const ytDiv = document.getElementById('yt-player');
         const streamPlayer = document.getElementById('stream-player');
@@ -301,7 +316,6 @@
             let type = 'html5';
             if (url.includes('youtu')) type = 'youtube';
 
-            // Manda todos carregarem (Sincronia)
             roomRef.update({
                 type: type,
                 src: url,
@@ -316,7 +330,6 @@
                 const data = snap.val();
                 if(!data || !data.src) return;
 
-                // Se tiver live, prioriza ela
                 if (data.broadcast && data.broadcast.isLive) return;
 
                 if (data.src !== currentSrc) {
@@ -324,7 +337,6 @@
                     playContent(data.type, data.src);
                 }
 
-                // Sincronia HTML5
                 if (data.type === 'html5' && html5Player.src) {
                     if (Math.abs(html5Player.currentTime - data.timestamp) > 3) {
                         html5Player.currentTime = data.timestamp;
@@ -352,17 +364,22 @@
                 
                 if (Hls.isSupported() && src.includes('.m3u8')) {
                     if(window.hls) window.hls.destroy();
-                    window.hls = new Hls();
+                    window.hls = new Hls({
+                        manifestLoadingTimeOut: 20000,
+                        fragLoadingTimeOut: 20000
+                    });
                     window.hls.loadSource(src);
                     window.hls.attachMedia(html5Player);
+                    window.hls.on(Hls.Events.ERROR, function (event, data) {
+                        if (data.fatal) html5Player.src = src; // Fallback
+                    });
                 } else {
                     html5Player.src = src;
                 }
                 
-                // Mudo inicial para evitar bloqueio do browser
                 html5Player.muted = true;
                 html5Player.play().then(() => {
-                    notify("Vídeo carregado. Ative o som.");
+                    notify("Vídeo pronto. Ative o som.");
                     unlockBtn.style.display = 'block';
                 }).catch(() => {
                     notify("Toque no botão para liberar.");
@@ -380,7 +397,36 @@
             unlockBtn.style.display = 'none';
         }
 
-        // --- WEBRTC (TRANSMISSÃO DE TELA) ---
+        function onYouTubeIframeAPIReady() {
+            window.ytPlayer = new YT.Player('yt-player', {
+                height: '100%', width: '100%', videoId: '',
+                playerVars: { 'autoplay': 1, 'controls': 1 },
+                events: {
+                    'onStateChange': e => {
+                        if(e.data === 1) updateServer('playing');
+                        if(e.data === 2) updateServer('paused');
+                    }
+                }
+            });
+        }
+
+        html5Player.onplay = () => updateServer('playing');
+        html5Player.onpause = () => updateServer('paused');
+        html5Player.ontimeupdate = () => {
+            if (!html5Player.paused && Date.now() - lastUpdate > 2000) {
+                updateServer('playing'); lastUpdate = Date.now();
+            }
+        };
+
+        function updateServer(status) {
+            if (!currentSrc) return;
+            roomRef.update({
+                status: status,
+                timestamp: html5Player.currentTime,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
         function setupWebRTC() {
             peer = new Peer(undefined, { config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} });
             
@@ -410,7 +456,6 @@
 
         async function startBroadcast() {
             try {
-                // Captura Tela (Só funciona no PC)
                 const stream = await navigator.mediaDevices.getDisplayMedia({video:{cursor:"always"}, audio:true});
                 isHost = true;
                 hostPreview.srcObject = stream;
@@ -426,38 +471,7 @@
                     hostPreview.style.display = 'none'; isHost = false;
                     broadcastBtn.classList.remove('active');
                 };
-            } catch (e) { notify("Erro: Use PC para transmitir."); }
-        }
-
-        // --- EXTRAS ---
-        function onYouTubeIframeAPIReady() {
-            window.ytPlayer = new YT.Player('yt-player', {
-                height: '100%', width: '100%', videoId: '',
-                playerVars: { 'autoplay': 1, 'controls': 1 },
-                events: {
-                    'onStateChange': e => {
-                        if(e.data === 1 && currentSrc) updateServer('playing');
-                        if(e.data === 2 && currentSrc) updateServer('paused');
-                    }
-                }
-            });
-        }
-
-        html5Player.onplay = () => updateServer('playing');
-        html5Player.onpause = () => updateServer('paused');
-        html5Player.ontimeupdate = () => {
-            if (!html5Player.paused && Date.now() - lastUpdate > 2000) {
-                updateServer('playing'); lastUpdate = Date.now();
-            }
-        };
-
-        function updateServer(status) {
-            if (!currentSrc) return;
-            roomRef.update({
-                status: status,
-                timestamp: html5Player.currentTime,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            });
+            } catch (e) { notify("Erro: Recurso indisponível no celular."); }
         }
 
         function setupChat() {
