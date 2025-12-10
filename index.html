@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>CineSync Minimal</title>
+    <title>CineSync Crystal</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -17,18 +17,18 @@
 </head>
 <body>
 
-    <div class="bg-deep"></div>
+    <div class="bg-crystal"></div>
     <div id="toast-area"></div>
 
     <div id="lobby">
-        <div class="lobby-card glass">
-            <h1>CineSync.</h1>
-            <p>Sincronia minimalista.</p>
+        <div class="lobby-card glass-panel">
+            <h1>CineSync</h1>
+            <p>Sincronia em cristal.</p>
             <div class="input-group">
-                <input type="text" id="userInput" placeholder="Seu Apelido">
-                <input type="text" id="roomInput" placeholder="Nome da Sala">
+                <input type="text" id="userInput" placeholder="Seu Apelido" class="glass-input">
+                <input type="text" id="roomInput" placeholder="Nome da Sala" class="glass-input">
             </div>
-            <button onclick="enterRoom()" class="btn-primary">Entrar</button>
+            <button onclick="enterRoom()" class="glass-btn btn-primary">Entrar</button>
         </div>
     </div>
 
@@ -36,40 +36,40 @@
         
         <div class="main-content">
             
-            <div class="video-container glass">
+            <div class="video-container glass-panel no-padding">
                 <div class="video-aspect-ratio">
                     <div id="yt-player"></div>
                     <video id="html5-player" controls playsinline></video>
                     <video id="stream-player" controls playsinline autoplay></video>
                     <video id="host-preview" muted playsinline></video>
                     
-                    <button id="unlock-btn" onclick="unlockAudio()">
-                        <span class="icon">🔊</span> Ativar Som
+                    <button id="unlock-btn" onclick="unlockAudio()" class="glass-btn unlock-glass">
+                        🔊 Ativar Som
                     </button>
                 </div>
             </div>
 
-            <div class="controls-bar glass">
+            <div class="controls-bar glass-panel">
                 <div class="controls-scroll">
-                    <input type="text" id="mediaUrl" placeholder="Cole o link do filme aqui...">
-                    <button onclick="loadMedia()" class="btn-accent">
-                        <span class="icon">▶</span> Play
+                    <input type="text" id="mediaUrl" placeholder="Link do filme..." class="glass-input url-input">
+                    <button onclick="loadMedia()" class="glass-btn btn-primary">
+                        ▶ Play
                     </button>
-                    <button id="broadcastBtn" class="btn-secondary" onclick="startBroadcast()" title="Transmissão (PC)">
+                    <button id="broadcastBtn" class="glass-btn btn-secondary" onclick="startBroadcast()" title="Transmissão (PC)">
                         <div class="live-indicator"></div>📡 Live
                     </button>
-                    <button onclick="shareLink()" class="btn-icon" title="Copiar Link">🔗</button>
+                    <button onclick="shareLink()" class="glass-btn btn-icon">🔗</button>
                 </div>
             </div>
         </div>
 
         <div class="side-content">
-            <div class="chat-container glass">
+            <div class="chat-container glass-panel no-padding">
                 <div class="chat-header">Bate-papo</div>
                 <div class="chat-msgs" id="chatList"></div>
                 <div class="chat-input-wrapper">
-                    <input id="msgInput" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()" class="btn-icon btn-accent">↑</button>
+                    <input id="msgInput" placeholder="Digite..." onkeypress="if(event.key==='Enter') sendMsg()" class="glass-input">
+                    <button onclick="sendMsg()" class="glass-btn btn-icon-send">➤</button>
                 </div>
             </div>
         </div>
