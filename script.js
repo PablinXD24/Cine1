@@ -1,4 +1,4 @@
-// --- 1. CONFIGURAÇÃO FIREBASE ---
+// --- CONFIGURAÇÃO FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyAzUrQOJcALZmO9vyO8J52XDKL4Q49M7Rg",
     authDomain: "cine-54caf.firebaseapp.com",
@@ -23,23 +23,21 @@ const hostPreview = document.getElementById('host-preview');
 const unlockBtn = document.getElementById('unlock-btn');
 const broadcastBtn = document.getElementById('broadcastBtn');
 
-// Notificações com ícones minimalistas
 function notify(msg, type='info') {
     const d = document.createElement('div');
     d.className = `toast`; 
-    let icon = 'ℹ️';
-    if(type === 'success') icon = '✅';
+    let icon = '✨';
+    if(type === 'success') icon = '🎉';
     if(type === 'error') icon = '⚠️';
     
     d.innerHTML = `<span>${icon}</span> ${msg}`;
-    if(type==='error') d.style.color = '#FF453A';
+    if(type==='error') d.style.borderLeft = '4px solid #FF453A';
     
     document.getElementById('toast-area').appendChild(d);
     setTimeout(() => {
-        d.style.opacity = '0';
-        d.style.transform = 'translateY(-20px)';
+        d.style.opacity = '0'; d.style.transform = 'translateY(-20px) scale(0.9)';
         setTimeout(() => d.remove(), 300);
-    }, 3000);
+    }, 3500);
 }
 
 function enterRoom() {
@@ -116,26 +114,19 @@ function playContent(type, src) {
         
         if (Hls.isSupported() && src.includes('.m3u8')) {
             if(window.hls) window.hls.destroy();
-            window.hls = new Hls({
-                manifestLoadingTimeOut: 20000,
-                fragLoadingTimeOut: 20000
-            });
+            window.hls = new Hls({ manifestLoadingTimeOut: 20000, fragLoadingTimeOut: 20000 });
             window.hls.loadSource(src);
             window.hls.attachMedia(html5Player);
-            window.hls.on(Hls.Events.ERROR, function (event, data) {
-                if (data.fatal) html5Player.src = src;
-            });
+            window.hls.on(Hls.Events.ERROR, function (event, data) { if (data.fatal) html5Player.src = src; });
         } else {
             html5Player.src = src;
         }
         
         html5Player.muted = true;
         html5Player.play().then(() => {
-            notify("Vídeo pronto.", "success");
-            unlockBtn.style.display = 'flex';
+            notify("Vídeo pronto.", "success"); unlockBtn.style.display = 'flex';
         }).catch(() => {
-            notify("Toque para iniciar.");
-            unlockBtn.style.display = 'flex';
+            notify("Toque para iniciar."); unlockBtn.style.display = 'flex';
         });
     }
 }
@@ -172,35 +163,26 @@ html5Player.ontimeupdate = () => {
 
 function updateServer(status) {
     if (!currentSrc) return;
-    roomRef.update({
-        status: status,
-        timestamp: html5Player.currentTime,
-        updatedAt: firebase.database.ServerValue.TIMESTAMP
-    });
+    roomRef.update({ status: status, timestamp: html5Player.currentTime, updatedAt: firebase.database.ServerValue.TIMESTAMP });
 }
 
 function setupWebRTC() {
     peer = new Peer(undefined, { config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} });
-    
     peer.on('open', id => {
         roomRef.child('broadcast').on('value', snap => {
             const data = snap.val();
             if (data && data.isLive && data.hostPeerId !== peer.id) {
                 notify(`Recebendo transmissão de ${data.hostName}`);
                 peer.connect(data.hostPeerId);
-                html5Player.style.display = 'none';
-                ytDiv.style.display = 'none';
-                streamPlayer.style.display = 'block';
-                unlockBtn.style.display = 'flex';
+                html5Player.style.display = 'none'; ytDiv.style.display = 'none';
+                streamPlayer.style.display = 'block'; unlockBtn.style.display = 'flex';
             }
         });
     });
-
     peer.on('call', call => {
         call.answer(null);
         call.on('stream', stream => {
-            streamPlayer.srcObject = stream;
-            streamPlayer.muted = true;
+            streamPlayer.srcObject = stream; streamPlayer.muted = true;
             streamPlayer.play().catch(() => unlockBtn.style.display = 'flex');
         });
     });
@@ -209,19 +191,14 @@ function setupWebRTC() {
 async function startBroadcast() {
     try {
         const stream = await navigator.mediaDevices.getDisplayMedia({video:{cursor:"always"}, audio:true});
-        isHost = true;
-        hostPreview.srcObject = stream;
-        hostPreview.style.display = 'block';
+        isHost = true; hostPreview.srcObject = stream; hostPreview.style.display = 'block';
         streamPlayer.style.display = 'none'; html5Player.style.display = 'none'; ytDiv.style.display = 'none';
-        
         broadcastBtn.classList.add('active');
         roomRef.child('broadcast').set({ hostPeerId: peer.id, isLive: true, hostName: user });
-        
         peer.on('connection', conn => { peer.call(conn.peer, stream); });
         stream.getVideoTracks()[0].onended = () => {
             roomRef.child('broadcast').set({ isLive: false });
-            hostPreview.style.display = 'none'; isHost = false;
-            broadcastBtn.classList.remove('active');
+            hostPreview.style.display = 'none'; isHost = false; broadcastBtn.classList.remove('active');
         };
     } catch (e) { notify("Transmissão disponível apenas no PC.", "error"); }
 }
@@ -229,8 +206,7 @@ async function startBroadcast() {
 function setupChat() {
     roomRef.child('chat').on('child_added', snap => {
         const msg = snap.val();
-        const d = document.createElement('div');
-        d.className = 'msg-bubble';
+        const d = document.createElement('div'); d.className = 'msg-bubble';
         d.innerHTML = `<strong>${msg.user}</strong> ${msg.text}`;
         document.getElementById('chatList').appendChild(d);
         document.getElementById('chatList').scrollTo({ top: 99999, behavior: 'smooth' });
