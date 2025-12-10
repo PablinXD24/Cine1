@@ -4,233 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>CineSync Minimal</title>
+    <title>CineSync Liquid</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        /* --- 1. ESTÉTICA APPLE DARK MINIMAL --- */
-        :root {
-            --bg-deep: #000000;
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.6);
-            
-            /* Cores Vivas Apple */
-            --accent: #0A84FF; /* Azul iOS Vibrante */
-            --accent-dark: #0070e0;
-            --error: #FF453A;
-            --success: #32D74B;
-            
-            /* Definição do Vidro Apple Pro */
-            --glass-bg: rgba(40, 40, 40, 0.65); /* Mais escuro e neutro */
-            --glass-border: rgba(255, 255, 255, 0.12); /* Borda fina e nítida */
-            --glass-shine: rgba(255, 255, 255, 0.15); /* Luz sutil na borda superior */
-            --radius: 24px;
-            --radius-sm: 16px;
-            
-            --safe-top: env(safe-area-inset-top, 20px);
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            margin: 0; 
-            /* Fonte nativa da Apple se disponível, senão Inter */
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-            background: var(--bg-deep); color: var(--text-primary);
-            height: 100vh; width: 100vw; overflow: hidden;
-            display: flex; flex-direction: column;
-        }
-
-        /* Fundo Minimalista Profundo */
-        .bg-minimal {
-            position: fixed; inset: 0; z-index: -2;
-            /* Gradiente sutil e rico, não chapado */
-            background: radial-gradient(circle at top left, #1a2a6c, transparent 70%),
-                        radial-gradient(circle at bottom right, #0f0c29, transparent 70%),
-                        #000000;
-        }
-
-        /* --- O VERDADEIRO APPLE LIQUID GLASS --- */
-        .glass {
-            background: var(--glass-bg);
-            /* Blur alto e saturação para o efeito "fosco premium" */
-            backdrop-filter: blur(50px) saturate(180%);
-            -webkit-backdrop-filter: blur(50px) saturate(180%);
-            
-            /* Bordas finas e nítidas */
-            border: 0.5px solid var(--glass-border);
-            border-radius: var(--radius);
-            
-            /* O segredo da Apple: luz sutil na borda superior interna */
-            box-shadow: inset 0 1px 0 0 var(--glass-shine);
-        }
-
-        /* --- 2. LAYOUT RESPONSIVO (MANTIDO) --- */
-        #app {
-            display: none; flex-direction: column;
-            width: 100%; height: 100%;
-            padding: var(--safe-top) 15px var(--safe-bottom) 15px;
-            gap: 15px;
-        }
-
-        .main-content { display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; }
-        .side-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-
-        /* VÍDEO */
-        .video-section {
-            width: 100%; overflow: hidden; padding: 0;
-            border-radius: var(--radius); border: 0.5px solid var(--glass-border);
-            background: #000;
-        }
-        .video-aspect-ratio {
-            width: 100%; aspect-ratio: 16/9; position: relative;
-            transform: translateZ(0); -webkit-transform: translateZ(0); z-index: 1;
-        }
-        video, #yt-player, #stream-player, #host-preview { width: 100%; height: 100%; position: absolute; object-fit: contain; z-index: 2; }
-        #html5-player, #stream-player, #host-preview { display: none; }
-
-        #unlock-btn {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100;
-            background: rgba(255, 255, 255, 0.9); color: black; border: none; padding: 14px 28px;
-            border-radius: 50px; font-weight: 600; cursor: pointer; display: none;
-            backdrop-filter: blur(20px);
-        }
-
-        /* CONTROLES */
-        .controls-section { padding: 12px; }
-        .controls-track {
-            display: flex; gap: 10px; align-items: center;
-            overflow-x: auto; -webkit-overflow-scrolling: touch;
-        }
-        .controls-track::-webkit-scrollbar { display: none; }
-
-        /* Inputs e Botões Minimalistas */
-        input {
-            background: rgba(0,0,0,0.2); border: 0.5px solid var(--glass-border);
-            color: white; padding: 14px 18px; border-radius: var(--radius-sm); font-size: 16px;
-            outline: none; transition: 0.3s; flex: 1; min-width: 200px;
-            font-family: inherit;
-        }
-        input:focus { border-color: var(--accent); background: rgba(0,0,0,0.3); }
-        input::placeholder { color: var(--text-secondary); }
-
-        button {
-            background: var(--accent); color: white; border: none;
-            padding: 0 24px; height: 50px; border-radius: var(--radius-sm);
-            font-weight: 600; cursor: pointer; white-space: nowrap; font-size: 1rem;
-            transition: 0.2s; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-            font-family: inherit;
-        }
-        button:hover { background: var(--accent-dark); }
-        button:active { transform: scale(0.97); }
-
-        .btn-live { background: rgba(255, 59, 48, 0.15); color: var(--error); }
-        .btn-live:hover { background: var(--error); color: white; }
-        .btn-live.active { background: var(--success); color: white; }
-        .live-dot { width: 8px; height: 8px; background: currentColor; border-radius: 50%; display: none; }
-        .btn-live.active .live-dot { display: block; }
-
-        .btn-icon { background: rgba(255,255,255,0.1); color: var(--text-primary); width: 50px; padding: 0; justify-content: center; }
-        .btn-icon:hover { background: rgba(255,255,255,0.2); }
-
-        /* CHAT MINIMALISTA */
-        .chat-section { flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100%; }
-        .chat-header {
-            padding: 15px 20px; border-bottom: 0.5px solid var(--glass-border);
-            font-weight: 600; font-size: 0.9rem; color: var(--text-primary);
-        }
-        .chat-msgs {
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 10px;
-        }
-        .msg-bubble {
-            background: rgba(255,255,255,0.06); padding: 10px 16px;
-            border-radius: 18px; border-bottom-left-radius: 4px;
-            font-size: 0.95rem; line-height: 1.5; max-width: 88%;
-            align-self: flex-start; color: var(--text-primary);
-        }
-        .msg-bubble strong { color: var(--accent); font-weight: 600; margin-right: 6px; }
-
-        .chat-input-area {
-            padding: 12px; display: flex; gap: 10px;
-            border-top: 0.5px solid var(--glass-border); background: rgba(0,0,0,0.1);
-        }
-
-        /* --- MEDIA QUERY: PC --- */
-        @media (min-width: 900px) {
-            #app {
-                flex-direction: row; max-width: 1600px; margin: 0 auto;
-                padding: 40px; gap: 30px;
-            }
-            .main-content { flex: 2.5; gap: 25px; }
-            .side-content { flex: 1; height: 100%; }
-            .controls-track { flex-wrap: wrap; overflow: visible; }
-        }
-
-        /* LOBBY MINIMALISTA */
-        #lobby { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); }
-        .lobby-card { width: 90%; max-width: 400px; padding: 40px; text-align: center; display: flex; flex-direction: column; gap: 25px; }
-        h1 { 
-            margin: 0; font-size: 2.8rem; font-weight: 700; letter-spacing: -1px;
-            color: var(--text-primary);
-        }
-        .highlight { color: var(--accent); }
-        .input-stack { display: flex; flex-direction: column; gap: 15px; }
-        .btn-primary { width: 100%; justify-content: center; background: var(--accent); color: white; font-size: 1.1rem; }
-
-        /* TOASTS */
-        #toast-area { position: fixed; top: calc(20px + var(--safe-top)); left: 50%; transform: translateX(-50%); z-index: 300; width: auto; pointer-events: none; }
-        .toast { 
-            pointer-events: auto; padding: 12px 24px; background: rgba(30, 30, 30, 0.95); 
-            backdrop-filter: blur(30px); border-radius: 50px; border: 0.5px solid var(--glass-border);
-            color: white; font-weight: 500; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: slideDown 0.3s ease;
-        }
-        @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="bg-minimal"></div>
+    <div class="bg-liquid"></div>
     <div id="toast-area"></div>
 
     <div id="lobby">
         <div class="lobby-card glass">
-            <h1>CineSync<span class="highlight">.</span></h1>
-            <p style="color:var(--text-secondary);">Sincronia simplificada.</p>
+            <h1>CineSync <span class="highlight">Liquid</span></h1>
+            <p>Sincronia Universal</p>
             <div class="input-stack">
                 <input type="text" id="userInput" placeholder="Seu Apelido">
                 <input type="text" id="roomInput" placeholder="Nome da Sala">
             </div>
-            <button onclick="enterRoom()" class="btn-primary">Entrar</button>
+            <button onclick="enterRoom()" class="btn-primary">Entrar na Sala</button>
         </div>
     </div>
 
     <div id="app">
         <div class="main-content">
-            <div class="video-section">
+            
+            <div class="video-section glass">
                 <div class="video-aspect-ratio">
                     <div id="yt-player"></div>
                     <video id="html5-player" controls playsinline></video>
                     <video id="stream-player" controls playsinline autoplay></video>
                     <video id="host-preview" muted playsinline></video>
-                    <button id="unlock-btn" onclick="unlockAudio()">🔊 Ativar Som</button>
+                    
+                    <button id="unlock-btn" onclick="unlockAudio()">🔊 Toque para Som</button>
                 </div>
             </div>
 
             <div class="controls-section glass">
                 <div class="controls-track">
-                    <input type="text" id="mediaUrl" placeholder="Cole o link do filme...">
-                    <button onclick="loadMedia()" style="padding: 0 30px;">Play</button>
-                    <button id="broadcastBtn" class="btn-live btn-icon" onclick="startBroadcast()" title="Live (PC)">
-                        <div class="live-dot"></div>📡
+                    <input type="text" id="mediaUrl" placeholder="Link do filme...">
+                    <button onclick="loadMedia()">▶ Play</button>
+                    <button id="broadcastBtn" class="btn-live" onclick="startBroadcast()">
+                        <div class="live-dot"></div> 📡 Live
                     </button>
                     <button onclick="shareLink()" class="btn-icon">🔗</button>
                 </div>
@@ -242,250 +63,13 @@
                 <div class="chat-header">Bate-papo</div>
                 <div class="chat-msgs" id="chatList"></div>
                 <div class="chat-input-area">
-                    <input id="msgInput" placeholder="Digite..." onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()" class="btn-icon" style="background: var(--accent); color: white;">↑</button>
+                    <input id="msgInput" placeholder="Digite aqui..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" class="btn-icon">➤</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // --- JAVASCRIPT (FUNCIONALIDADE MANTIDA) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyAzUrQOJcALZmO9vyO8J52XDKL4Q49M7Rg",
-            authDomain: "cine-54caf.firebaseapp.com",
-            databaseURL: "https://cine-54caf-default-rtdb.firebaseio.com",
-            projectId: "cine-54caf",
-            storageBucket: "cine-54caf.firebasestorage.app",
-            messagingSenderId: "345032163360",
-            appId: "1:345032163360:web:7be1fca9c58250c2bf3c45"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let roomRef, user, peer, myStream;
-        let isHost = false;
-        let currentSrc = '';
-        let lastUpdate = 0;
-
-        const html5Player = document.getElementById('html5-player');
-        const ytDiv = document.getElementById('yt-player');
-        const streamPlayer = document.getElementById('stream-player');
-        const hostPreview = document.getElementById('host-preview');
-        const unlockBtn = document.getElementById('unlock-btn');
-        const broadcastBtn = document.getElementById('broadcastBtn');
-
-        function notify(msg, type='info') {
-            const d = document.createElement('div');
-            d.className = `toast`; 
-            // Ícone simples baseado no tipo
-            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-            d.innerHTML = `<span>${icon}</span> ${msg}`;
-            if(type==='error') d.style.color = 'var(--error)';
-            document.getElementById('toast-area').appendChild(d);
-            setTimeout(() => d.remove(), 4000);
-        }
-
-        function enterRoom() {
-            user = document.getElementById('userInput').value || 'Visitante';
-            let roomInput = document.getElementById('roomInput').value || 'geral';
-            const room = roomInput.trim().toLowerCase();
-            
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('app').style.display = 'flex';
-            
-            const url = window.location.pathname + '?room=' + room;
-            window.history.pushState({path: url}, '', url);
-
-            roomRef = db.ref(`rooms/${room}`);
-            notify(`Conectado à sala: ${room}`, "success");
-
-            setupSync();
-            setupChat();
-            setupWebRTC();
-        }
-
-        function loadMedia() {
-            const url = document.getElementById('mediaUrl').value.trim();
-            if(!url) return notify("Cole um link válido.", "error");
-
-            let type = 'html5';
-            if (url.includes('youtu')) type = 'youtube';
-
-            roomRef.update({
-                type: type,
-                src: url,
-                status: 'playing',
-                timestamp: 0,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            });
-        }
-
-        function setupSync() {
-            roomRef.on('value', snap => {
-                const data = snap.val();
-                if(!data || !data.src) return;
-
-                if (data.broadcast && data.broadcast.isLive) return;
-
-                if (data.src !== currentSrc) {
-                    currentSrc = data.src;
-                    playContent(data.type, data.src);
-                }
-
-                if (data.type === 'html5' && html5Player.src) {
-                    if (Math.abs(html5Player.currentTime - data.timestamp) > 3) {
-                        html5Player.currentTime = data.timestamp;
-                    }
-                    if (data.status === 'playing' && html5Player.paused) {
-                        html5Player.play().catch(()=>{});
-                    } else if (data.status === 'paused' && !html5Player.paused) {
-                        html5Player.pause();
-                    }
-                }
-            });
-        }
-
-        function playContent(type, src) {
-            hostPreview.style.display = 'none';
-            streamPlayer.style.display = 'none';
-            
-            if (type === 'youtube') {
-                html5Player.style.display = 'none';
-                ytDiv.style.display = 'block';
-                if(window.ytPlayer) window.ytPlayer.loadVideoById(src.match(/(?:v=|\/)([\w-]{11})/)[1]);
-            } else {
-                ytDiv.style.display = 'none';
-                html5Player.style.display = 'block';
-                
-                if (Hls.isSupported() && src.includes('.m3u8')) {
-                    if(window.hls) window.hls.destroy();
-                    window.hls = new Hls({
-                        manifestLoadingTimeOut: 20000,
-                        fragLoadingTimeOut: 20000
-                    });
-                    window.hls.loadSource(src);
-                    window.hls.attachMedia(html5Player);
-                    window.hls.on(Hls.Events.ERROR, function (event, data) {
-                        if (data.fatal) html5Player.src = src;
-                    });
-                } else {
-                    html5Player.src = src;
-                }
-                
-                html5Player.muted = true;
-                html5Player.play().then(() => {
-                    notify("Vídeo pronto. Toque para ativar o som.", "success");
-                    unlockBtn.style.display = 'block';
-                }).catch(() => {
-                    notify("Toque no botão central para iniciar.", "info");
-                    unlockBtn.style.display = 'block';
-                });
-            }
-        }
-
-        function unlockAudio() {
-            if(html5Player.style.display !== 'none') {
-                html5Player.muted = false; html5Player.play();
-            } else {
-                streamPlayer.muted = false; streamPlayer.play();
-            }
-            unlockBtn.style.display = 'none';
-        }
-
-        function onYouTubeIframeAPIReady() {
-            window.ytPlayer = new YT.Player('yt-player', {
-                height: '100%', width: '100%', videoId: '',
-                playerVars: { 'autoplay': 1, 'controls': 1, 'modestbranding': 1 },
-                events: {
-                    'onStateChange': e => {
-                        if(e.data === 1 && currentSrc) updateServer('playing');
-                        if(e.data === 2 && currentSrc) updateServer('paused');
-                    }
-                }
-            });
-        }
-
-        html5Player.onplay = () => updateServer('playing');
-        html5Player.onpause = () => updateServer('paused');
-        html5Player.ontimeupdate = () => {
-            if (!html5Player.paused && Date.now() - lastUpdate > 2000) {
-                updateServer('playing'); lastUpdate = Date.now();
-            }
-        };
-
-        function updateServer(status) {
-            if (!currentSrc) return;
-            roomRef.update({
-                status: status,
-                timestamp: html5Player.currentTime,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            });
-        }
-
-        function setupWebRTC() {
-            peer = new Peer(undefined, { config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} });
-            
-            peer.on('open', id => {
-                roomRef.child('broadcast').on('value', snap => {
-                    const data = snap.val();
-                    if (data && data.isLive && data.hostPeerId !== peer.id) {
-                        notify(`Recebendo transmissão de ${data.hostName}`);
-                        peer.connect(data.hostPeerId);
-                        html5Player.style.display = 'none';
-                        ytDiv.style.display = 'none';
-                        streamPlayer.style.display = 'block';
-                        unlockBtn.style.display = 'block';
-                    }
-                });
-            });
-
-            peer.on('call', call => {
-                call.answer(null);
-                call.on('stream', stream => {
-                    streamPlayer.srcObject = stream;
-                    streamPlayer.muted = true;
-                    streamPlayer.play().catch(() => unlockBtn.style.display = 'block');
-                });
-            });
-        }
-
-        async function startBroadcast() {
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({video:{cursor:"always"}, audio:true});
-                isHost = true;
-                hostPreview.srcObject = stream;
-                hostPreview.style.display = 'block';
-                streamPlayer.style.display = 'none'; html5Player.style.display = 'none'; ytDiv.style.display = 'none';
-                
-                broadcastBtn.classList.add('active');
-                roomRef.child('broadcast').set({ hostPeerId: peer.id, isLive: true, hostName: user });
-                
-                peer.on('connection', conn => { peer.call(conn.peer, stream); });
-                stream.getVideoTracks()[0].onended = () => {
-                    roomRef.child('broadcast').set({ isLive: false });
-                    hostPreview.style.display = 'none'; isHost = false;
-                    broadcastBtn.classList.remove('active');
-                };
-            } catch (e) { notify("Transmissão disponível apenas no PC.", "error"); }
-        }
-
-        function setupChat() {
-            roomRef.child('chat').on('child_added', snap => {
-                const msg = snap.val();
-                const d = document.createElement('div');
-                d.className = 'msg-bubble';
-                d.innerHTML = `<strong>${msg.user}</strong> ${msg.text}`;
-                document.getElementById('chatList').appendChild(d);
-                document.getElementById('chatList').scrollTop = 99999;
-            });
-        }
-        function sendMsg() {
-            const i = document.getElementById('msgInput');
-            if(i.value) roomRef.child('chat').push({ user, text: i.value });
-            i.value = '';
-        }
-        function shareLink() { navigator.clipboard.writeText(window.location.href); notify("Link copiado!", "success"); }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
