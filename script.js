@@ -23,12 +23,23 @@ const hostPreview = document.getElementById('host-preview');
 const unlockBtn = document.getElementById('unlock-btn');
 const broadcastBtn = document.getElementById('broadcastBtn');
 
+// Notificações com ícones minimalistas
 function notify(msg, type='info') {
     const d = document.createElement('div');
-    d.className = `toast`; d.innerText = msg;
-    if(type==='error') d.style.borderLeftColor = 'var(--error)';
+    d.className = `toast`; 
+    let icon = 'ℹ️';
+    if(type === 'success') icon = '✅';
+    if(type === 'error') icon = '⚠️';
+    
+    d.innerHTML = `<span>${icon}</span> ${msg}`;
+    if(type==='error') d.style.color = '#FF453A';
+    
     document.getElementById('toast-area').appendChild(d);
-    setTimeout(() => d.remove(), 4000);
+    setTimeout(() => {
+        d.style.opacity = '0';
+        d.style.transform = 'translateY(-20px)';
+        setTimeout(() => d.remove(), 300);
+    }, 3000);
 }
 
 function enterRoom() {
@@ -43,7 +54,7 @@ function enterRoom() {
     window.history.pushState({path: url}, '', url);
 
     roomRef = db.ref(`rooms/${room}`);
-    notify(`Conectado à sala: ${room}`, "success");
+    notify(`Sala conectada: ${room}`, "success");
 
     setupSync();
     setupChat();
@@ -52,7 +63,7 @@ function enterRoom() {
 
 function loadMedia() {
     const url = document.getElementById('mediaUrl').value.trim();
-    if(!url) return notify("Cole um link!", "error");
+    if(!url) return notify("Cole um link válido.", "error");
 
     let type = 'html5';
     if (url.includes('youtu')) type = 'youtube';
@@ -112,20 +123,19 @@ function playContent(type, src) {
             window.hls.loadSource(src);
             window.hls.attachMedia(html5Player);
             window.hls.on(Hls.Events.ERROR, function (event, data) {
-                if (data.fatal) html5Player.src = src; // Fallback
+                if (data.fatal) html5Player.src = src;
             });
         } else {
             html5Player.src = src;
         }
         
-        // Mute inicial para evitar bloqueio do Android
         html5Player.muted = true;
         html5Player.play().then(() => {
-            notify("Vídeo pronto. Ative o som.");
-            unlockBtn.style.display = 'block';
+            notify("Vídeo pronto.", "success");
+            unlockBtn.style.display = 'flex';
         }).catch(() => {
-            notify("Toque no botão para liberar.");
-            unlockBtn.style.display = 'block';
+            notify("Toque para iniciar.");
+            unlockBtn.style.display = 'flex';
         });
     }
 }
@@ -142,7 +152,7 @@ function unlockAudio() {
 function onYouTubeIframeAPIReady() {
     window.ytPlayer = new YT.Player('yt-player', {
         height: '100%', width: '100%', videoId: '',
-        playerVars: { 'autoplay': 1, 'controls': 1 },
+        playerVars: { 'autoplay': 1, 'controls': 1, 'modestbranding': 1, 'rel': 0 },
         events: {
             'onStateChange': e => {
                 if(e.data === 1 && currentSrc) updateServer('playing');
@@ -181,7 +191,7 @@ function setupWebRTC() {
                 html5Player.style.display = 'none';
                 ytDiv.style.display = 'none';
                 streamPlayer.style.display = 'block';
-                unlockBtn.style.display = 'block';
+                unlockBtn.style.display = 'flex';
             }
         });
     });
@@ -191,7 +201,7 @@ function setupWebRTC() {
         call.on('stream', stream => {
             streamPlayer.srcObject = stream;
             streamPlayer.muted = true;
-            streamPlayer.play().catch(() => unlockBtn.style.display = 'block');
+            streamPlayer.play().catch(() => unlockBtn.style.display = 'flex');
         });
     });
 }
@@ -213,7 +223,7 @@ async function startBroadcast() {
             hostPreview.style.display = 'none'; isHost = false;
             broadcastBtn.classList.remove('active');
         };
-    } catch (e) { notify("Erro: Recurso indisponível no celular."); }
+    } catch (e) { notify("Transmissão disponível apenas no PC.", "error"); }
 }
 
 function setupChat() {
@@ -221,9 +231,9 @@ function setupChat() {
         const msg = snap.val();
         const d = document.createElement('div');
         d.className = 'msg-bubble';
-        d.innerHTML = `<strong>${msg.user}</strong>${msg.text}`;
+        d.innerHTML = `<strong>${msg.user}</strong> ${msg.text}`;
         document.getElementById('chatList').appendChild(d);
-        document.getElementById('chatList').scrollTop = 99999;
+        document.getElementById('chatList').scrollTo({ top: 99999, behavior: 'smooth' });
     });
 }
 function sendMsg() {
