@@ -4,70 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <title>CineSync Liquid</title>
+    <title>CineSync Minimal</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="bg-liquid"></div>
+    <div class="bg-deep"></div>
     <div id="toast-area"></div>
 
     <div id="lobby">
         <div class="lobby-card glass">
-            <h1>CineSync <span class="highlight">Liquid</span></h1>
-            <p>Sincronia Universal</p>
-            <div class="input-stack">
+            <h1>CineSync.</h1>
+            <p>Sincronia minimalista.</p>
+            <div class="input-group">
                 <input type="text" id="userInput" placeholder="Seu Apelido">
                 <input type="text" id="roomInput" placeholder="Nome da Sala">
             </div>
-            <button onclick="enterRoom()" class="btn-primary">Entrar na Sala</button>
+            <button onclick="enterRoom()" class="btn-primary">Entrar</button>
         </div>
     </div>
 
     <div id="app">
+        
         <div class="main-content">
             
-            <div class="video-section glass">
+            <div class="video-container glass">
                 <div class="video-aspect-ratio">
                     <div id="yt-player"></div>
                     <video id="html5-player" controls playsinline></video>
                     <video id="stream-player" controls playsinline autoplay></video>
                     <video id="host-preview" muted playsinline></video>
                     
-                    <button id="unlock-btn" onclick="unlockAudio()">🔊 Toque para Som</button>
+                    <button id="unlock-btn" onclick="unlockAudio()">
+                        <span class="icon">🔊</span> Ativar Som
+                    </button>
                 </div>
             </div>
 
-            <div class="controls-section glass">
-                <div class="controls-track">
-                    <input type="text" id="mediaUrl" placeholder="Link do filme...">
-                    <button onclick="loadMedia()">▶ Play</button>
-                    <button id="broadcastBtn" class="btn-live" onclick="startBroadcast()">
-                        <div class="live-dot"></div> 📡 Live
+            <div class="controls-bar glass">
+                <div class="controls-scroll">
+                    <input type="text" id="mediaUrl" placeholder="Cole o link do filme aqui...">
+                    <button onclick="loadMedia()" class="btn-accent">
+                        <span class="icon">▶</span> Play
                     </button>
-                    <button onclick="shareLink()" class="btn-icon">🔗</button>
+                    <button id="broadcastBtn" class="btn-secondary" onclick="startBroadcast()" title="Transmissão (PC)">
+                        <div class="live-indicator"></div>📡 Live
+                    </button>
+                    <button onclick="shareLink()" class="btn-icon" title="Copiar Link">🔗</button>
                 </div>
             </div>
         </div>
 
         <div class="side-content">
-            <div class="chat-section glass">
+            <div class="chat-container glass">
                 <div class="chat-header">Bate-papo</div>
                 <div class="chat-msgs" id="chatList"></div>
-                <div class="chat-input-area">
-                    <input id="msgInput" placeholder="Digite aqui..." onkeypress="if(event.key==='Enter') sendMsg()">
-                    <button onclick="sendMsg()" class="btn-icon">➤</button>
+                <div class="chat-input-wrapper">
+                    <input id="msgInput" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter') sendMsg()">
+                    <button onclick="sendMsg()" class="btn-icon btn-accent">↑</button>
                 </div>
             </div>
         </div>
+
     </div>
 
     <script src="script.js"></script>
